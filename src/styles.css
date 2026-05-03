@@ -69,29 +69,29 @@
 
 :root {
   --radius: 0.5rem;
-  /* Premium dark luxury palette: slate-900 base + champagne gold */
-  --background: oklch(0.18 0.015 250);
-  --foreground: oklch(0.97 0.005 80);
-  --gold: oklch(0.78 0.13 80);
-  --gold-foreground: oklch(0.15 0.02 250);
+  /* Light luxury palette: warm white + champagne gold */
+  --background: oklch(0.99 0.005 85);
+  --foreground: oklch(0.18 0.015 80);
+  --gold: oklch(0.74 0.14 78);
+  --gold-foreground: oklch(0.99 0.005 85);
   --gold-muted: oklch(0.55 0.09 80);
-  --card: oklch(0.22 0.018 250);
-  --card-foreground: oklch(0.97 0.005 80);
-  --popover: oklch(0.22 0.018 250);
-  --popover-foreground: oklch(0.97 0.005 80);
-  --primary: oklch(0.78 0.13 80);
-  --primary-foreground: oklch(0.15 0.02 250);
-  --secondary: oklch(0.26 0.02 250);
-  --secondary-foreground: oklch(0.97 0.005 80);
-  --muted: oklch(0.26 0.02 250);
-  --muted-foreground: oklch(0.68 0.015 250);
-  --accent: oklch(0.78 0.13 80);
-  --accent-foreground: oklch(0.15 0.02 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.015 80);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.015 80);
+  --primary: oklch(0.74 0.14 78);
+  --primary-foreground: oklch(0.99 0.005 85);
+  --secondary: oklch(0.96 0.01 85);
+  --secondary-foreground: oklch(0.2 0.015 80);
+  --muted: oklch(0.96 0.01 85);
+  --muted-foreground: oklch(0.48 0.02 80);
+  --accent: oklch(0.74 0.14 78);
+  --accent-foreground: oklch(0.99 0.005 85);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 80);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.78 0.13 80);
+  --border: oklch(0.18 0.015 80 / 10%);
+  --input: oklch(0.18 0.015 80 / 14%);
+  --ring: oklch(0.74 0.14 78);
   --chart-1: oklch(0.78 0.13 80);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -161,13 +161,13 @@
 }
 
 @utility text-gradient-gold {
-  background: linear-gradient(135deg, oklch(0.85 0.13 85), oklch(0.7 0.14 70));
+  background: linear-gradient(135deg, oklch(0.78 0.14 82), oklch(0.6 0.13 65));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 @utility bg-gradient-hero {
-  background: radial-gradient(ellipse at top right, oklch(0.78 0.13 80 / 0.15), transparent 60%),
-    linear-gradient(180deg, oklch(0.16 0.015 250), oklch(0.12 0.01 250));
+  background: radial-gradient(ellipse at top right, oklch(0.78 0.14 80 / 0.18), transparent 60%),
+    linear-gradient(180deg, oklch(1 0 0), oklch(0.97 0.012 85));
 }
