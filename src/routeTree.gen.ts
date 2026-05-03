@@ -14,6 +14,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as AccountTransactionsRouteImport } from './routes/account.transactions'
 import { Route as AccountReferRouteImport } from './routes/account.refer'
 import { Route as AccountProfileRouteImport } from './routes/account.profile'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRoute,
 } as any)
 const AccountTransactionsRoute = AccountTransactionsRouteImport.update({
   id: '/transactions',
@@ -82,10 +88,10 @@ export interface FileRoutesByFullPath {
   '/account/profile': typeof AccountProfileRoute
   '/account/refer': typeof AccountReferRoute
   '/account/transactions': typeof AccountTransactionsRoute
+  '/account/': typeof AccountIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/account': typeof AccountRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/sell': typeof SellRoute
@@ -94,6 +100,7 @@ export interface FileRoutesByTo {
   '/account/profile': typeof AccountProfileRoute
   '/account/refer': typeof AccountReferRoute
   '/account/transactions': typeof AccountTransactionsRoute
+  '/account': typeof AccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +114,7 @@ export interface FileRoutesById {
   '/account/profile': typeof AccountProfileRoute
   '/account/refer': typeof AccountReferRoute
   '/account/transactions': typeof AccountTransactionsRoute
+  '/account/': typeof AccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,10 +129,10 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/refer'
     | '/account/transactions'
+    | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/account'
     | '/login'
     | '/register'
     | '/sell'
@@ -133,6 +141,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/refer'
     | '/account/transactions'
+    | '/account'
   id:
     | '__root__'
     | '/'
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/refer'
     | '/account/transactions'
+    | '/account/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -192,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/transactions': {
       id: '/account/transactions'
       path: '/transactions'
@@ -236,6 +253,7 @@ interface AccountRouteChildren {
   AccountProfileRoute: typeof AccountProfileRoute
   AccountReferRoute: typeof AccountReferRoute
   AccountTransactionsRoute: typeof AccountTransactionsRoute
+  AccountIndexRoute: typeof AccountIndexRoute
 }
 
 const AccountRouteChildren: AccountRouteChildren = {
@@ -244,6 +262,7 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountProfileRoute: AccountProfileRoute,
   AccountReferRoute: AccountReferRoute,
   AccountTransactionsRoute: AccountTransactionsRoute,
+  AccountIndexRoute: AccountIndexRoute,
 }
 
 const AccountRouteWithChildren =
