@@ -77,8 +77,8 @@ export function Navbar() {
           <div ref={accountRef} className="relative">
             <button
               onClick={() => setAccountOpen((v) => !v)}
-              className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary hover:text-gold ${
-                accountOpen ? "bg-secondary text-gold" : "text-foreground"
+              className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-white/10 hover:text-gold ${
+                accountOpen ? "bg-white/10 text-gold" : "text-white/90"
               }`}
               aria-expanded={accountOpen}
               aria-haspopup="menu"
