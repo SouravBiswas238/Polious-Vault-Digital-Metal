@@ -60,16 +60,16 @@ export function Navbar() {
           </Link>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-2">
+        <nav className="hidden lg:flex items-center gap-1">
           <Link
             to="/"
-            className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary hover:text-gold"
+            className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-gold"
           >
             <ShoppingCart className="h-4 w-4" /> Buy From Us
           </Link>
           <Link
             to="/sell"
-            className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary hover:text-gold"
+            className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-gold"
           >
             <Tag className="h-4 w-4" /> Sell To Us
           </Link>
