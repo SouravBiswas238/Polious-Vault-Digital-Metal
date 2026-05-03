@@ -141,17 +141,29 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-2 rounded-full border border-border/80 bg-secondary/40 px-4 py-2 w-56 xl:w-64">
-            <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="hidden md:flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 w-48 xl:w-64">
+            <Search className="h-4 w-4 text-white/50" />
             <input
               placeholder="Search bullion, coins…"
-              className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
             />
           </div>
+          <Link
+            to="/login"
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-white/20 px-4 py-2 text-sm font-semibold text-white/90 transition-colors hover:border-gold/60 hover:text-gold"
+          >
+            <LogIn className="h-3.5 w-3.5" /> Log In
+          </Link>
+          <Link
+            to="/register"
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-gold-foreground transition-shadow hover:shadow-[0_8px_30px_-8px_oklch(0.78_0.13_80/0.7)]"
+          >
+            <UserPlus className="h-3.5 w-3.5" /> Register
+          </Link>
           <button
             onClick={openCart}
             aria-label="Open cart"
-            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-secondary/40 transition-colors hover:border-gold/60 hover:text-gold"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-colors hover:border-gold/60 hover:text-gold"
           >
             <ShoppingBag className="h-5 w-5" />
             {count > 0 && (
