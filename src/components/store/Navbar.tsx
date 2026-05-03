@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Search, ShoppingBag, Menu } from "lucide-react";
 import { useCart } from "./CartContext";
+import logo from "@/assets/logo.jpeg";
 
 const navLinks = ["Bullion", "Coins", "Jewelry", "Storage", "Live Prices"];
 
@@ -14,9 +15,10 @@ export function Navbar() {
           <button className="md:hidden text-foreground/80" aria-label="Menu">
             <Menu className="h-5 w-5" />
           </button>
-          <a href="/" className="font-display text-2xl font-semibold tracking-tight">
-            <span className="text-gradient-gold">AURUM</span>
-            <span className="text-foreground/70">.</span>
+          <a href="/" className="flex items-center gap-2.5 font-display text-2xl font-semibold tracking-tight">
+            <img src={logo} alt="Polyus Vault logo" className="h-9 w-9 rounded-md object-contain" />
+            <span className="text-gradient-gold">POLYUS</span>
+            <span className="text-foreground/80">VAULT</span>
           </a>
         </div>
 
