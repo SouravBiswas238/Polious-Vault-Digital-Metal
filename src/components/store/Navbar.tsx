@@ -47,7 +47,7 @@ export function Navbar() {
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 lg:px-12">
         <div className="flex items-center gap-3">
           <button
-            className="lg:hidden text-foreground/80"
+            className="lg:hidden text-white/80"
             aria-label="Menu"
             onClick={() => setMobileOpen((v) => !v)}
           >
@@ -56,7 +56,7 @@ export function Navbar() {
           <Link to="/" className="flex items-center gap-2.5 font-display text-2xl font-semibold tracking-tight">
             <img src={logo} alt="Polyus Vault logo" className="h-9 w-9 rounded-md object-contain" />
             <span className="text-gradient-gold">POLYUS</span>
-            <span className="hidden sm:inline text-foreground/80">VAULT</span>
+            <span className="hidden sm:inline text-white/85">VAULT</span>
           </Link>
         </div>
 
