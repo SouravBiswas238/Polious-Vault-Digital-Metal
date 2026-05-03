@@ -1,11 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CartProvider } from "@/components/store/CartContext";
-import { TopBar } from "@/components/store/TopBar";
-import { Navbar } from "@/components/store/Navbar";
 import { HeroSlider } from "@/components/store/HeroSlider";
 import { ProductGrid } from "@/components/store/ProductGrid";
-import { CartDrawer } from "@/components/store/CartDrawer";
-import { Footer } from "@/components/store/Footer";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -15,7 +10,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Buy investment-grade gold, silver, and platinum bullion. Insured vaulted storage and live spot pricing trusted by collectors and institutions.",
+          "Buy investment-grade gold, silver, platinum, palladium and rhodium bullion. Insured vaulted storage and live spot pricing.",
       },
     ],
   }),
@@ -23,17 +18,9 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <CartProvider>
-      <div className="min-h-screen bg-background text-foreground">
-        <TopBar />
-        <Navbar />
-        <main>
-          <HeroSlider />
-          <ProductGrid />
-        </main>
-        <Footer />
-        <CartDrawer />
-      </div>
-    </CartProvider>
+    <>
+      <HeroSlider />
+      <ProductGrid />
+    </>
   );
 }
