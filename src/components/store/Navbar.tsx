@@ -187,7 +187,7 @@ export function Navbar() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="lg:hidden overflow-hidden border-t border-border bg-background"
+            className="lg:hidden overflow-hidden border-t border-white/10 bg-neutral-950"
           >
             <div className="flex flex-col p-4 gap-1">
               <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary">
