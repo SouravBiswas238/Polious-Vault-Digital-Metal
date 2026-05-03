@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Aurum — Investment-Grade Gold & Precious Metals" },
+      { title: "Polyus Vault — Investment-Grade Gold & Precious Metals" },
       {
         name: "description",
         content:

@@ -4,8 +4,8 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-6 py-16 md:grid-cols-4 lg:px-12">
         <div className="col-span-2">
           <div className="font-display text-2xl">
-            <span className="text-gradient-gold">AURUM</span>
-            <span className="text-foreground/70">.</span>
+            <span className="text-gradient-gold">POLYUS</span>
+            <span className="text-foreground/80"> VAULT</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             A trusted dealer of investment-grade precious metals. Insured vaulted
@@ -29,7 +29,7 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-border/60 px-6 py-6 text-center text-xs text-muted-foreground lg:px-12">
-        © {new Date().getFullYear()} Aurum Bullion · All prices in USD
+        © {new Date().getFullYear()} Polyus Vault · All prices in USD
       </div>
     </footer>
   );
