@@ -9,38 +9,182 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SellRouteImport } from './routes/sell'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountTransactionsRouteImport } from './routes/account.transactions'
+import { Route as AccountReferRouteImport } from './routes/account.refer'
+import { Route as AccountProfileRouteImport } from './routes/account.profile'
+import { Route as AccountCreditCardRouteImport } from './routes/account.credit-card'
+import { Route as AccountAddFundsRouteImport } from './routes/account.add-funds'
 
+const SellRoute = SellRouteImport.update({
+  id: '/sell',
+  path: '/sell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountTransactionsRoute = AccountTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountReferRoute = AccountReferRouteImport.update({
+  id: '/refer',
+  path: '/refer',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountCreditCardRoute = AccountCreditCardRouteImport.update({
+  id: '/credit-card',
+  path: '/credit-card',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountAddFundsRoute = AccountAddFundsRouteImport.update({
+  id: '/add-funds',
+  path: '/add-funds',
+  getParentRoute: () => AccountRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/sell': typeof SellRoute
+  '/account/add-funds': typeof AccountAddFundsRoute
+  '/account/credit-card': typeof AccountCreditCardRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/refer': typeof AccountReferRoute
+  '/account/transactions': typeof AccountTransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/sell': typeof SellRoute
+  '/account/add-funds': typeof AccountAddFundsRoute
+  '/account/credit-card': typeof AccountCreditCardRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/refer': typeof AccountReferRoute
+  '/account/transactions': typeof AccountTransactionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/sell': typeof SellRoute
+  '/account/add-funds': typeof AccountAddFundsRoute
+  '/account/credit-card': typeof AccountCreditCardRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/refer': typeof AccountReferRoute
+  '/account/transactions': typeof AccountTransactionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/login'
+    | '/register'
+    | '/sell'
+    | '/account/add-funds'
+    | '/account/credit-card'
+    | '/account/profile'
+    | '/account/refer'
+    | '/account/transactions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/account'
+    | '/login'
+    | '/register'
+    | '/sell'
+    | '/account/add-funds'
+    | '/account/credit-card'
+    | '/account/profile'
+    | '/account/refer'
+    | '/account/transactions'
+  id:
+    | '__root__'
+    | '/'
+    | '/account'
+    | '/login'
+    | '/register'
+    | '/sell'
+    | '/account/add-funds'
+    | '/account/credit-card'
+    | '/account/profile'
+    | '/account/refer'
+    | '/account/transactions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  SellRoute: typeof SellRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sell': {
+      id: '/sell'
+      path: '/sell'
+      fullPath: '/sell'
+      preLoaderRoute: typeof SellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +192,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/transactions': {
+      id: '/account/transactions'
+      path: '/transactions'
+      fullPath: '/account/transactions'
+      preLoaderRoute: typeof AccountTransactionsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/refer': {
+      id: '/account/refer'
+      path: '/refer'
+      fullPath: '/account/refer'
+      preLoaderRoute: typeof AccountReferRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/profile': {
+      id: '/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/credit-card': {
+      id: '/account/credit-card'
+      path: '/credit-card'
+      fullPath: '/account/credit-card'
+      preLoaderRoute: typeof AccountCreditCardRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/add-funds': {
+      id: '/account/add-funds'
+      path: '/add-funds'
+      fullPath: '/account/add-funds'
+      preLoaderRoute: typeof AccountAddFundsRouteImport
+      parentRoute: typeof AccountRoute
+    }
   }
 }
 
+interface AccountRouteChildren {
+  AccountAddFundsRoute: typeof AccountAddFundsRoute
+  AccountCreditCardRoute: typeof AccountCreditCardRoute
+  AccountProfileRoute: typeof AccountProfileRoute
+  AccountReferRoute: typeof AccountReferRoute
+  AccountTransactionsRoute: typeof AccountTransactionsRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountAddFundsRoute: AccountAddFundsRoute,
+  AccountCreditCardRoute: AccountCreditCardRoute,
+  AccountProfileRoute: AccountProfileRoute,
+  AccountReferRoute: AccountReferRoute,
+  AccountTransactionsRoute: AccountTransactionsRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  SellRoute: SellRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
