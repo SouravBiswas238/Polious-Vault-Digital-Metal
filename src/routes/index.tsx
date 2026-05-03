@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CartProvider } from "@/components/store/CartContext";
+import { TopBar } from "@/components/store/TopBar";
 import { Navbar } from "@/components/store/Navbar";
-import { Hero } from "@/components/store/Hero";
+import { HeroSlider } from "@/components/store/HeroSlider";
 import { ProductGrid } from "@/components/store/ProductGrid";
 import { CartDrawer } from "@/components/store/CartDrawer";
 import { Footer } from "@/components/store/Footer";
@@ -24,9 +25,10 @@ function Index() {
   return (
     <CartProvider>
       <div className="min-h-screen bg-background text-foreground">
+        <TopBar />
         <Navbar />
         <main>
-          <Hero />
+          <HeroSlider />
           <ProductGrid />
         </main>
         <Footer />
