@@ -5,6 +5,7 @@ import { Hero } from "@/components/store/Hero";
 import { ProductGrid } from "@/components/store/ProductGrid";
 import { CartDrawer } from "@/components/store/CartDrawer";
 import { Footer } from "@/components/store/Footer";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -20,7 +21,22 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+
 function Index() {
+  useEffect(() => {
+    // Create script element
+    const script = document.createElement('script');
+    script.src = "https://plugin-code.salesmartly.com/js/project_700075_722149_1777793582.js"; // SaleSmartly script source
+    script.async = true;
+
+    // Append to the document body
+    document.body.appendChild(script);
+
+    // Cleanup script on component unmount
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
   return (
     <CartProvider>
       <div className="min-h-screen bg-background text-foreground">
