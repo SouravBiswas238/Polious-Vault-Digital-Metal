@@ -8,8 +8,8 @@ export function Footer() {
             <span className="text-foreground/80"> VAULT</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-            A trusted dealer of investment-grade precious metals. Insured vaulted
-            storage in Zurich, Singapore, and Toronto.
+            A trusted dealer of investment-grade precious metals. Insured vaulted storage in Zurich,
+            Singapore, and Toronto.
           </p>
         </div>
         {[
@@ -21,7 +21,9 @@ export function Footer() {
             <ul className="mt-4 space-y-3 text-sm text-foreground/70">
               {col.l.map((i) => (
                 <li key={i}>
-                  <a href="#" className="transition-colors hover:text-gold">{i}</a>
+                  <a href="#" className="transition-colors hover:text-gold">
+                    {i}
+                  </a>
                 </li>
               ))}
             </ul>

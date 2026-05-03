@@ -33,12 +33,15 @@ function LoginPage() {
     <div className="bg-gradient-hero min-h-[calc(100vh-5rem)] py-12 lg:py-20">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 lg:grid-cols-2 lg:gap-16">
         <div className="hidden lg:flex flex-col justify-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Welcome Back</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+            Welcome Back
+          </span>
           <h1 className="mt-3 font-display text-5xl font-semibold leading-tight">
             Sign in to your <span className="text-gradient-gold">Vault</span>
           </h1>
           <p className="mt-5 max-w-md text-muted-foreground">
-            Access live spot pricing, manage your stored bullion, and review your transaction history in one secure place.
+            Access live spot pricing, manage your stored bullion, and review your transaction
+            history in one secure place.
           </p>
           <div className="mt-10 grid gap-4 text-sm">
             {[
@@ -76,7 +79,11 @@ function LoginPage() {
               onChange={(v) => setForm({ ...form, password: v })}
               placeholder="••••••••"
               trailing={
-                <button type="button" onClick={() => setShow((v) => !v)} className="text-muted-foreground hover:text-foreground">
+                <button
+                  type="button"
+                  onClick={() => setShow((v) => !v)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               }

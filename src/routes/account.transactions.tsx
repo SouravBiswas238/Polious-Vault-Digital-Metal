@@ -16,7 +16,9 @@ function TransactionsPage() {
   return (
     <div>
       <h2 className="font-display text-2xl font-semibold">Transaction Summary</h2>
-      <p className="mt-1 text-sm text-muted-foreground">All recent activity in your vault account.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        All recent activity in your vault account.
+      </p>
 
       {!tx ? (
         <div className="flex items-center gap-2 py-12 text-muted-foreground">
@@ -42,18 +44,30 @@ function TransactionsPage() {
                   <td className="px-4 py-3 font-mono text-xs">{t.id}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">
-                      {t.amount < 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                      {t.amount < 0 ? (
+                        <ArrowUpRight className="h-3 w-3" />
+                      ) : (
+                        <ArrowDownRight className="h-3 w-3" />
+                      )}
                       {t.type}
                     </span>
                   </td>
                   <td className="px-4 py-3">{t.description}</td>
-                  <td className={`px-4 py-3 text-right font-semibold ${t.amount < 0 ? "text-destructive" : "text-foreground"}`}>
+                  <td
+                    className={`px-4 py-3 text-right font-semibold ${t.amount < 0 ? "text-destructive" : "text-foreground"}`}
+                  >
                     {t.amount < 0 ? "-" : "+"}${Math.abs(t.amount).toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold ${
-                      t.status === "Completed" ? "text-emerald-600" : t.status === "Pending" ? "text-amber-600" : "text-destructive"
-                    }`}>
+                    <span
+                      className={`text-xs font-semibold ${
+                        t.status === "Completed"
+                          ? "text-emerald-600"
+                          : t.status === "Pending"
+                            ? "text-amber-600"
+                            : "text-destructive"
+                      }`}
+                    >
                       {t.status}
                     </span>
                   </td>

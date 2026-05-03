@@ -19,7 +19,9 @@ function AccountLayout() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 lg:py-14">
       <h1 className="font-display text-4xl font-semibold">My Account</h1>
-      <p className="mt-1 text-muted-foreground">Manage your vault, payments and personal information.</p>
+      <p className="mt-1 text-muted-foreground">
+        Manage your vault, payments and personal information.
+      </p>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="space-y-1">

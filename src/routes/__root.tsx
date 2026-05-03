@@ -1,8 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import { CartProvider } from "@/components/store/CartContext";
-import { Navbar } from "@/components/store/Navbar";
-import { Footer } from "@/components/store/Footer";
-import { CartDrawer } from "@/components/store/CartDrawer";
+import { CartProvider } from "@/features/cart/context/CartContext";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { CartDrawer } from "@/features/cart/components/CartDrawer";
 
 import appCss from "../styles.css?url";
 

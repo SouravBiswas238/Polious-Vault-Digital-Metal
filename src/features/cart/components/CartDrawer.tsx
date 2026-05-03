@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2, X, Lock } from "lucide-react";
-import { useCart } from "./CartContext";
+import { useCart } from "@/features/cart/context/CartContext";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -68,7 +68,11 @@ export function CartDrawer() {
                         className="flex gap-4 py-5"
                       >
                         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-background">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex items-start justify-between gap-3">
@@ -98,7 +102,9 @@ export function CartDrawer() {
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </button>
-                              <span className="w-6 text-center text-sm font-medium tabular-nums">{item.qty}</span>
+                              <span className="w-6 text-center text-sm font-medium tabular-nums">
+                                {item.qty}
+                              </span>
                               <button
                                 onClick={() => updateQty(item.id, item.qty + 1)}
                                 className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-gold"
@@ -107,7 +113,9 @@ export function CartDrawer() {
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
                             </div>
-                            <p className="font-display text-base text-gold">{fmt(item.price * item.qty)}</p>
+                            <p className="font-display text-base text-gold">
+                              {fmt(item.price * item.qty)}
+                            </p>
                           </div>
                         </div>
                       </motion.li>
@@ -129,7 +137,9 @@ export function CartDrawer() {
                 </div>
                 <div className="mt-4 flex items-baseline justify-between border-t border-border/60 pt-4">
                   <span className="font-display text-lg">Total</span>
-                  <span className="font-display text-2xl text-gradient-gold tabular-nums">{fmt(total)}</span>
+                  <span className="font-display text-2xl text-gradient-gold tabular-nums">
+                    {fmt(total)}
+                  </span>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.01 }}

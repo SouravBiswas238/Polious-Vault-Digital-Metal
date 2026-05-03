@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { CartItem, Product } from "./types";
+import type { CartItem, Product } from "@/features/products/types";
 
 type CartContextValue = {
   items: CartItem[];
@@ -28,14 +28,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   };
 
-  const removeItem = (id: string) =>
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
 
   const updateQty = (id: string, qty: number) =>
     setItems((prev) =>
-      prev
-        .map((i) => (i.id === id ? { ...i, qty: Math.max(0, qty) } : i))
-        .filter((i) => i.qty > 0),
+      prev.map((i) => (i.id === id ? { ...i, qty: Math.max(0, qty) } : i)).filter((i) => i.qty > 0),
     );
 
   const value = useMemo<CartContextValue>(

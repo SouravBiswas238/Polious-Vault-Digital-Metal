@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SellRouteImport } from './routes/sell'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LiveChartsRouteImport } from './routes/live-charts'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
@@ -34,6 +35,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveChartsRoute = LiveChartsRouteImport.update({
+  id: '/live-charts',
+  path: '/live-charts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -80,6 +86,7 @@ const AccountAddFundsRoute = AccountAddFundsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
+  '/live-charts': typeof LiveChartsRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/sell': typeof SellRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/live-charts': typeof LiveChartsRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/sell': typeof SellRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
+  '/live-charts': typeof LiveChartsRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/sell': typeof SellRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/live-charts'
     | '/login'
     | '/register'
     | '/sell'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/live-charts'
     | '/login'
     | '/register'
     | '/sell'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/live-charts'
     | '/login'
     | '/register'
     | '/sell'
@@ -160,6 +172,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRouteWithChildren
+  LiveChartsRoute: typeof LiveChartsRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SellRoute: typeof SellRoute
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live-charts': {
+      id: '/live-charts'
+      path: '/live-charts'
+      fullPath: '/live-charts'
+      preLoaderRoute: typeof LiveChartsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -271,6 +291,7 @@ const AccountRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRouteWithChildren,
+  LiveChartsRoute: LiveChartsRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SellRoute: SellRoute,

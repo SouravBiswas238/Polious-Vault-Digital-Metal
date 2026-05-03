@@ -8,26 +8,40 @@ export const Route = createFileRoute("/account/credit-card")({
 });
 
 function CardsPage() {
-  const [cards, setCards] = useState<{ id: string; brand: string; last4: string; exp: string }[]>([]);
+  const [cards, setCards] = useState<{ id: string; brand: string; last4: string; exp: string }[]>(
+    [],
+  );
 
-  useEffect(() => { accountApi.cards().then(setCards); }, []);
+  useEffect(() => {
+    accountApi.cards().then(setCards);
+  }, []);
 
   return (
     <div>
       <h2 className="font-display text-2xl font-semibold">Credit Cards</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Manage payment methods used for orders and deposits.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Manage payment methods used for orders and deposits.
+      </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {cards.map((c) => (
-          <div key={c.id} className="flex items-center justify-between rounded-xl border border-border bg-gradient-to-br from-foreground to-foreground/80 p-5 text-background shadow-md">
+          <div
+            key={c.id}
+            className="flex items-center justify-between rounded-xl border border-border bg-gradient-to-br from-foreground to-foreground/80 p-5 text-background shadow-md"
+          >
             <div className="flex items-center gap-3">
               <CreditCard className="h-8 w-8 text-gold" />
               <div>
-                <div className="text-sm font-semibold">{c.brand} •••• {c.last4}</div>
+                <div className="text-sm font-semibold">
+                  {c.brand} •••• {c.last4}
+                </div>
                 <div className="text-xs text-background/60">Expires {c.exp}</div>
               </div>
             </div>
-            <button className="text-background/60 hover:text-destructive" onClick={() => setCards((p) => p.filter((x) => x.id !== c.id))}>
+            <button
+              className="text-background/60 hover:text-destructive"
+              onClick={() => setCards((p) => p.filter((x) => x.id !== c.id))}
+            >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>

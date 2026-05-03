@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import { useCart } from "./CartContext";
-import { METALS, PRODUCTS } from "./products";
-import type { Metal } from "./types";
+import { useCart } from "@/features/cart/context/CartContext";
+import { METALS, PRODUCTS } from "@/features/products/data/products";
+import type { Metal } from "@/features/products/types";
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 export function ProductGrid() {
   const { addItem } = useCart();
@@ -19,9 +23,7 @@ export function ProductGrid() {
     <section id="shop" className="mx-auto max-w-7xl px-6 py-24 lg:px-12 lg:py-32">
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold">
-            Shop by metal
-          </p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold">Shop by metal</p>
           <h2 className="mt-3 font-display text-4xl font-semibold tracking-tight md:text-5xl">
             {meta.label}
             <span className="ml-3 text-muted-foreground">— {meta.tagline}</span>
@@ -86,9 +88,7 @@ export function ProductGrid() {
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">
                   {p.metal} · {p.category}
                 </p>
-                <h3 className="mt-1 font-display text-xl font-semibold leading-tight">
-                  {p.name}
-                </h3>
+                <h3 className="mt-1 font-display text-xl font-semibold leading-tight">{p.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{p.weight}</p>
               </div>
               <div className="font-display text-xl text-gold">{fmt(p.price)}</div>

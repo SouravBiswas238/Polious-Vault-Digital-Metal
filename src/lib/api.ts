@@ -2,12 +2,11 @@
 // Every method is a thin async stub returning typed mock data — replace bodies
 // with real fetch() calls when the backend is ready.
 
-import type { Product } from "@/components/store/types";
-import { PRODUCTS } from "@/components/store/products";
+import type { Product } from "@/features/products/types";
+import { PRODUCTS } from "@/features/products/data/products";
 
 export const API_BASE_URL =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ||
-  "/api";
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) || "/api";
 
 async function delay<T>(value: T, ms = 350): Promise<T> {
   return new Promise((res) => setTimeout(() => res(value), ms));
@@ -123,10 +122,38 @@ export const accountApi = {
   },
   async transactions(): Promise<Transaction[]> {
     return delay([
-      { id: "T-10293", date: "2026-04-28", type: "Buy", description: "1 oz PAMP Gold Bar", amount: -2480, status: "Completed" },
-      { id: "T-10288", date: "2026-04-21", type: "Deposit", description: "Wire transfer", amount: 5000, status: "Completed" },
-      { id: "T-10271", date: "2026-04-15", type: "Sell", description: "10 oz Silver Bar", amount: 320, status: "Completed" },
-      { id: "T-10260", date: "2026-04-10", type: "Buy", description: "Platinum Maple Leaf", amount: -1090, status: "Pending" },
+      {
+        id: "T-10293",
+        date: "2026-04-28",
+        type: "Buy",
+        description: "1 oz PAMP Gold Bar",
+        amount: -2480,
+        status: "Completed",
+      },
+      {
+        id: "T-10288",
+        date: "2026-04-21",
+        type: "Deposit",
+        description: "Wire transfer",
+        amount: 5000,
+        status: "Completed",
+      },
+      {
+        id: "T-10271",
+        date: "2026-04-15",
+        type: "Sell",
+        description: "10 oz Silver Bar",
+        amount: 320,
+        status: "Completed",
+      },
+      {
+        id: "T-10260",
+        date: "2026-04-10",
+        type: "Buy",
+        description: "Platinum Maple Leaf",
+        amount: -1090,
+        status: "Pending",
+      },
     ]);
   },
   async addFunds(amount: number, method: string): Promise<{ ok: true; reference: string }> {

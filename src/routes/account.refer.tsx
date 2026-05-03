@@ -23,15 +23,24 @@ function ReferPage() {
   return (
     <div>
       <h2 className="font-display text-2xl font-semibold">Refer a Friend</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Earn $50 in vault credit for every friend who funds an account.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Earn $50 in vault credit for every friend who funds an account.
+      </p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-gold/30 bg-gold/5 p-6">
           <Gift className="h-7 w-7 text-gold" />
           <h3 className="mt-3 font-display text-xl font-semibold">Your referral link</h3>
           <div className="mt-3 flex gap-2">
-            <input readOnly value={link} className="flex-1 rounded-md border border-border bg-background px-3 py-2.5 text-sm" />
-            <button onClick={() => navigator.clipboard?.writeText(link)} className="rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-gold-foreground hover:opacity-90">
+            <input
+              readOnly
+              value={link}
+              className="flex-1 rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+            />
+            <button
+              onClick={() => navigator.clipboard?.writeText(link)}
+              className="rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-gold-foreground hover:opacity-90"
+            >
               Copy
             </button>
           </div>

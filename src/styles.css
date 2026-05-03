@@ -71,7 +71,7 @@
 :root {
   --radius: 0.5rem;
   /* Light luxury palette: warm white + champagne gold */
-  --background: oklch(0.99 0.005 85);
+  --background: oklch(96.673% 0.0135 93.003);
   --foreground: oklch(0.18 0.015 80);
   --gold: oklch(0.74 0.14 78);
   --gold-foreground: oklch(0.99 0.005 85);
@@ -169,6 +169,7 @@
 }
 
 @utility bg-gradient-hero {
-  background: radial-gradient(ellipse at top right, oklch(0.78 0.14 80 / 0.18), transparent 60%),
+  background:
+    radial-gradient(ellipse at top right, oklch(0.78 0.14 80 / 0.18), transparent 60%),
     linear-gradient(180deg, oklch(1 0 0), oklch(0.97 0.012 85));
 }

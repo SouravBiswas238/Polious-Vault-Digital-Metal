@@ -42,7 +42,7 @@ export function HeroSlider() {
   const s = slides[i];
 
   return (
-    <section className="relative h-[520px] overflow-hidden bg-secondary md:h-[600px]">
+    <section className="relative h-[480px] sm:h-[520px] md:h-[600px] lg:h-[680px] xl:h-[720px] overflow-hidden bg-secondary">
       <AnimatePresence mode="sync">
         <motion.img
           key={s.image}
@@ -55,7 +55,7 @@ export function HeroSlider() {
           className="absolute inset-0 h-full w-full object-cover"
         />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/10" />
 
       <div className="relative mx-auto flex h-full max-w-7xl items-center px-6 lg:px-12">
         <AnimatePresence mode="wait">
@@ -67,16 +67,14 @@ export function HeroSlider() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="max-w-xl"
           >
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold drop-shadow-md">
               {s.eyebrow}
             </p>
-            <h1 className="mt-4 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+            <h1 className="mt-4 font-display text-4xl sm:text-5xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-lg md:text-6xl lg:text-7xl">
               {s.title}
             </h1>
-            <p className="mt-5 max-w-md text-base text-muted-foreground md:text-lg">
-              {s.desc}
-            </p>
-            <button className="mt-8 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-gold-foreground transition-shadow hover:shadow-[0_10px_40px_-10px_oklch(0.78_0.13_80/0.6)]">
+            <p className="mt-5 max-w-md text-base text-white/80 drop-shadow md:text-lg">{s.desc}</p>
+            <button className="mt-8 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_10px_40px_-10px_oklch(0.78_0.13_80/0.6)]">
               {s.cta}
               <ArrowRight className="h-4 w-4" />
             </button>
@@ -103,14 +101,14 @@ export function HeroSlider() {
       </div>
 
       {/* Dots */}
-      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 gap-2 md:left-12 md:translate-x-0">
+      <div className="absolute bottom-8 left-6 flex gap-2 md:bottom-10 md:left-12">
         {slides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setI(idx)}
             aria-label={`Go to slide ${idx + 1}`}
             className={`h-1.5 rounded-full transition-all ${
-              idx === i ? "w-10 bg-gold" : "w-5 bg-foreground/20"
+              idx === i ? "w-10 bg-gold shadow-md" : "w-5 bg-white/40 hover:bg-white/60"
             }`}
           />
         ))}

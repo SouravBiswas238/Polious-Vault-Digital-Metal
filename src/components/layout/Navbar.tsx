@@ -14,10 +14,11 @@ import {
   LogIn,
   UserPlus,
   X,
+  LineChart,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { useCart } from "./CartContext";
+import { useCart } from "@/features/cart/context/CartContext";
 import logo from "@/assets/logo.jpeg";
 
 const accountMenu = [
@@ -53,7 +54,10 @@ export function Navbar() {
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <Link to="/" className="flex items-center gap-2.5 font-display text-2xl font-semibold tracking-tight">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 font-display text-2xl font-semibold tracking-tight"
+          >
             <img src={logo} alt="Polyus Vault logo" className="h-9 w-9 rounded-md object-contain" />
             <span className="text-gradient-gold">POLYUS</span>
             <span className="hidden sm:inline text-foreground/80">VAULT</span>
@@ -100,7 +104,9 @@ export function Navbar() {
                   role="menu"
                 >
                   <div className="border-b border-border bg-foreground px-4 py-3 text-background">
-                    <div className="text-xs uppercase tracking-wider text-background/60">Signed in as</div>
+                    <div className="text-xs uppercase tracking-wider text-background/60">
+                      Signed in as
+                    </div>
                     <div className="truncate text-sm font-semibold">guest@polyusvault.com</div>
                   </div>
                   <ul className="py-2">
@@ -178,12 +184,21 @@ export function Navbar() {
             className="lg:hidden overflow-hidden border-t border-border bg-background"
           >
             <div className="flex flex-col p-4 gap-1">
-              <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary">
+              <Link
+                to="/"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary"
+              >
                 <ShoppingCart className="h-4 w-4 text-gold" /> Buy From Us
               </Link>
-              <Link to="/sell" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary">
+              <Link
+                to="/sell"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-secondary"
+              >
                 <Tag className="h-4 w-4 text-gold" /> Sell To Us
               </Link>
+
               <div className="mt-2 mb-1 px-3 text-[11px] uppercase tracking-wider text-muted-foreground">
                 My Account
               </div>
@@ -198,10 +213,18 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-semibold">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-semibold"
+                >
                   <LogIn className="h-4 w-4" /> Log In
                 </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2.5 text-sm font-semibold text-gold-foreground">
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2.5 text-sm font-semibold text-gold-foreground"
+                >
                   <UserPlus className="h-4 w-4" /> Register
                 </Link>
               </div>
@@ -212,4 +235,3 @@ export function Navbar() {
     </header>
   );
 }
-

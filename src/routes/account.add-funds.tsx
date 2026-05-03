@@ -27,11 +27,15 @@ function AddFundsPage() {
   return (
     <div>
       <h2 className="font-display text-2xl font-semibold">How to Add Funds</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Choose a deposit method and amount to fund your vault.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Choose a deposit method and amount to fund your vault.
+      </p>
 
       <form onSubmit={submit} className="mt-8 max-w-xl space-y-6">
         <div>
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Amount (USD)</span>
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Amount (USD)
+          </span>
           <div className="flex items-center rounded-md border border-border bg-background px-3 focus-within:border-gold">
             <span className="text-foreground/60">$</span>
             <input
@@ -45,12 +49,23 @@ function AddFundsPage() {
         </div>
 
         <div className="space-y-2">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Method</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Method
+          </span>
           {methods.map((m) => (
-            <label key={m.id} className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
-              method === m.id ? "border-gold bg-gold/5" : "border-border hover:border-gold/40"
-            }`}>
-              <input type="radio" name="method" checked={method === m.id} onChange={() => setMethod(m.id)} className="accent-[var(--gold)]" />
+            <label
+              key={m.id}
+              className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
+                method === m.id ? "border-gold bg-gold/5" : "border-border hover:border-gold/40"
+              }`}
+            >
+              <input
+                type="radio"
+                name="method"
+                checked={method === m.id}
+                onChange={() => setMethod(m.id)}
+                className="accent-[var(--gold)]"
+              />
               <m.icon className="h-5 w-5 text-gold" />
               <div className="flex-1">
                 <div className="text-sm font-semibold">{m.name}</div>

@@ -8,7 +8,15 @@ export const Route = createFileRoute("/register")({
   head: () => ({ meta: [{ title: "Create Account — Polyus Vault" }] }),
 });
 
-const COUNTRIES = ["United States", "Canada", "United Kingdom", "Germany", "Switzerland", "Singapore", "Other"];
+const COUNTRIES = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Germany",
+  "Switzerland",
+  "Singapore",
+  "Other",
+];
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -47,7 +55,9 @@ function RegisterPage() {
     <div className="bg-gradient-hero min-h-[calc(100vh-5rem)] py-12 lg:py-16">
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Open Account</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+            Open Account
+          </span>
           <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
             Create your <span className="text-gradient-gold">Polyus Vault</span> account
           </h1>
@@ -57,11 +67,31 @@ function RegisterPage() {
         <div className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-10">
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field icon={User} label="First Name" required value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
-              <Field icon={User} label="Last Name" required value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
+              <Field
+                icon={User}
+                label="First Name"
+                required
+                value={form.firstName}
+                onChange={(v) => setForm({ ...form, firstName: v })}
+              />
+              <Field
+                icon={User}
+                label="Last Name"
+                required
+                value={form.lastName}
+                onChange={(v) => setForm({ ...form, lastName: v })}
+              />
             </div>
 
-            <Field icon={Mail} label="Email Address" type="email" required value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="you@example.com" />
+            <Field
+              icon={Mail}
+              label="Email Address"
+              type="email"
+              required
+              value={form.email}
+              onChange={(v) => setForm({ ...form, email: v })}
+              placeholder="you@example.com"
+            />
 
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
@@ -73,16 +103,28 @@ function RegisterPage() {
                 onChange={(v) => setForm({ ...form, password: v })}
                 placeholder="At least 8 characters"
                 trailing={
-                  <button type="button" onClick={() => setShow((v) => !v)} className="text-muted-foreground hover:text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setShow((v) => !v)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 }
               />
-              <Field icon={Phone} label="Phone (optional)" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="+1 555 123 4567" />
+              <Field
+                icon={Phone}
+                label="Phone (optional)"
+                value={form.phone}
+                onChange={(v) => setForm({ ...form, phone: v })}
+                placeholder="+1 555 123 4567"
+              />
             </div>
 
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Country</span>
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Country
+              </span>
               <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 focus-within:border-gold">
                 <Globe2 className="h-4 w-4 text-muted-foreground" />
                 <select
@@ -105,13 +147,16 @@ function RegisterPage() {
                 className="mt-0.5 h-4 w-4 rounded border-border accent-[var(--gold)]"
               />
               <span>
-                I agree to the <a className="font-semibold text-gold hover:underline">Terms of Service</a> and{" "}
+                I agree to the{" "}
+                <a className="font-semibold text-gold hover:underline">Terms of Service</a> and{" "}
                 <a className="font-semibold text-gold hover:underline">Privacy Policy</a>.
               </span>
             </label>
 
             {error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
             )}
 
             <button
@@ -123,7 +168,8 @@ function RegisterPage() {
             </button>
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="h-4 w-4 text-gold" /> Your data is secured with 256-bit SSL encryption
+              <ShieldCheck className="h-4 w-4 text-gold" /> Your data is secured with 256-bit SSL
+              encryption
             </div>
 
             <p className="text-center text-sm text-muted-foreground">
@@ -153,7 +199,9 @@ function Field({
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
       <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 focus-within:border-gold">
         <Icon className="h-4 w-4 text-muted-foreground" />
         <input

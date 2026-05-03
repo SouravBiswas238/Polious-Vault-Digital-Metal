@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HeroSlider } from "@/components/store/HeroSlider";
-import { ProductGrid } from "@/components/store/ProductGrid";
-import { CartDrawer } from "@/components/store/CartDrawer";
-import { Footer } from "@/components/store/Footer";
+import { HeroSlider } from "@/features/home/components/HeroSlider";
+import { LivePriceTicker } from "@/features/home/components/LivePriceTicker";
+import { ProductGrid } from "@/features/products/components/ProductGrid";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
@@ -19,11 +18,10 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-
 function Index() {
   useEffect(() => {
     // Create script element
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = "https://plugin-code.salesmartly.com/js/project_700075_722149_1777793582.js"; // SaleSmartly script source
     script.async = true;
 
@@ -38,6 +36,7 @@ function Index() {
   return (
     <>
       <HeroSlider />
+      <LivePriceTicker />
       <ProductGrid />
     </>
   );
