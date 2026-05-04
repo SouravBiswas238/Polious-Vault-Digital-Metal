@@ -8,8 +8,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Log In — Polyus Vault" }] }),
 });
 
+import { useAuth } from "@/hooks/useAuth";
+
 function LoginPage() {
   const navigate = useNavigate();
+  const { login: setAuth } = useAuth();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +23,8 @@ function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await authApi.login(form);
+      const data = await authApi.login(form);
+      setAuth(data);
       navigate({ to: "/account/transactions" });
     } catch (err: any) {
       setError(err?.message ?? "Login failed");

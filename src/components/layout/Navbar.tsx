@@ -13,12 +13,13 @@ import {
   Users,
   LogIn,
   UserPlus,
+  LogOut,
   X,
-  LineChart,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/features/cart/context/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.jpeg";
 
 const accountMenu = [
@@ -31,6 +32,7 @@ const accountMenu = [
 
 export function Navbar() {
   const { count, openCart } = useCart();
+  const { user, logout } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-gold/10 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 lg:px-12">
         <div className="flex items-center gap-3">
           <button
@@ -87,7 +89,7 @@ export function Navbar() {
               aria-expanded={accountOpen}
               aria-haspopup="menu"
             >
-              <UserCircle2 className="h-4 w-4" /> My Account
+              <UserCircle2 className="h-4 w-4" /> {user ? `${user.personalInfo.firstName}'s Account` : "My Account"}
               <ChevronDown
                 className={`h-3.5 w-3.5 transition-transform ${accountOpen ? "rotate-180" : ""}`}
               />
@@ -105,9 +107,11 @@ export function Navbar() {
                 >
                   <div className="border-b border-border bg-foreground px-4 py-3 text-background">
                     <div className="text-xs uppercase tracking-wider text-background/60">
-                      Signed in as
+                      {user ? "Signed in as" : "Guest User"}
                     </div>
-                    <div className="truncate text-sm font-semibold">guest@polyusvault.com</div>
+                    <div className="truncate text-sm font-semibold">
+                      {user ? user.personalInfo.email : "Welcome to Polyus Vault"}
+                    </div>
                   </div>
                   <ul className="py-2">
                     {accountMenu.map((m) => (
@@ -124,21 +128,35 @@ export function Navbar() {
                       </li>
                     ))}
                   </ul>
-                  <div className="grid grid-cols-2 gap-2 border-t border-border bg-secondary/40 p-3">
-                    <Link
-                      to="/login"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:border-gold/60 hover:text-gold"
-                    >
-                      <LogIn className="h-3.5 w-3.5" /> Log In
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2 text-xs font-semibold text-gold-foreground hover:opacity-90"
-                    >
-                      <UserPlus className="h-3.5 w-3.5" /> Register
-                    </Link>
+                  <div className="grid grid-cols-1 border-t border-border bg-secondary/40 p-3">
+                    {user ? (
+                      <button
+                        onClick={() => {
+                          setAccountOpen(false);
+                          logout();
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-md bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground hover:opacity-90"
+                      >
+                        <LogOut className="h-3.5 w-3.5" /> Log Out
+                      </button>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          to="/login"
+                          onClick={() => setAccountOpen(false)}
+                          className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:border-gold/60 hover:text-gold"
+                        >
+                          <LogIn className="h-3.5 w-3.5" /> Log In
+                        </Link>
+                        <Link
+                          to="/register"
+                          onClick={() => setAccountOpen(false)}
+                          className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2 text-xs font-semibold text-gold-foreground hover:opacity-90"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" /> Register
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -200,7 +218,7 @@ export function Navbar() {
               </Link>
 
               <div className="mt-2 mb-1 px-3 text-[11px] uppercase tracking-wider text-muted-foreground">
-                My Account
+                {user ? `${user.personalInfo.firstName}'s Account` : "My Account"}
               </div>
               {accountMenu.map((m) => (
                 <Link
@@ -212,21 +230,35 @@ export function Navbar() {
                   <m.icon className="h-4 w-4 text-muted-foreground" /> {m.label}
                 </Link>
               ))}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-semibold"
-                >
-                  <LogIn className="h-4 w-4" /> Log In
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2.5 text-sm font-semibold text-gold-foreground"
-                >
-                  <UserPlus className="h-4 w-4" /> Register
-                </Link>
+              <div className="mt-3">
+                {user ? (
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      logout();
+                    }}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-md bg-destructive px-3 py-2.5 text-sm font-semibold text-destructive-foreground"
+                  >
+                    <LogOut className="h-4 w-4" /> Log Out
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-semibold"
+                    >
+                      <LogIn className="h-4 w-4" /> Log In
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-1.5 rounded-md bg-gold px-3 py-2.5 text-sm font-semibold text-gold-foreground"
+                    >
+                      <UserPlus className="h-4 w-4" /> Register
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

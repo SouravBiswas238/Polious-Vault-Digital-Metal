@@ -1,69 +1,129 @@
-// Centralized API client. Swap BASE_URL or wire to fetch / your backend.
-// Every method is a thin async stub returning typed mock data — replace bodies
-// with real fetch() calls when the backend is ready.
-
+// Centralized API client.
 import type { Product } from "@/features/products/types";
 import { PRODUCTS } from "@/features/products/data/products";
 
 export const API_BASE_URL =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) || "/api";
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) || "http://localhost:5000/api";
 
 async function delay<T>(value: T, ms = 350): Promise<T> {
   return new Promise((res) => setTimeout(() => res(value), ms));
 }
 
+// Helper for fetching with Auth Token
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem("token");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Auto logout on token expiration
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Optional: window.location.href = "/login";
+    }
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+}
+
 /* ---------- Auth ---------- */
 export type LoginInput = { email: string; password: string; remember?: boolean };
 export type RegisterInput = {
-  firstName: string;
-  lastName: string;
-  email: string;
+  accountType: "personal" | "business" | "joint" | "trust" | "minor";
+  personalInfo: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    phoneCode: string;
+    phoneNumber: string;
+    occupation?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+  };
+  businessInfo?: {
+    entityName?: string;
+    tradeName?: string;
+    entityType?: string;
+    registrationNumber?: string;
+    businessAddress?: {
+      street?: string;
+      suite?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      zipCode?: string;
+    };
+  };
+  kycCompliance: {
+    pepStatus: boolean;
+    taxCountry?: string;
+    taxId?: string;
+  };
+  marketingPreferences: {
+    subscribeNewsletters: boolean;
+    subscribePromotions: boolean;
+  };
+  agreements: {
+    termsAccepted: boolean;
+    amlPolicyAccepted: boolean;
+  };
   password: string;
-  country: string;
-  phone?: string;
-  agree: boolean;
 };
+
 export type AuthUser = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  balance: number;
+  _id: string;
+  personalInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  token: string;
 };
 
 export const authApi = {
   async login(input: LoginInput): Promise<AuthUser> {
-    // TODO: POST `${API_BASE_URL}/auth/login`
-    return delay({
-      id: "u_demo",
-      email: input.email,
-      firstName: "Demo",
-      lastName: "User",
-      balance: 12450.75,
+    return request<AuthUser>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(input),
     });
   },
   async register(input: RegisterInput): Promise<AuthUser> {
-    // TODO: POST `${API_BASE_URL}/auth/register`
-    return delay({
-      id: "u_new",
-      email: input.email,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      balance: 0,
+    return request<AuthUser>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(input),
     });
   },
-  async logout(): Promise<void> {
-    return delay(undefined);
+  async getProfile(): Promise<AuthUser> {
+    return request<AuthUser>("/auth/profile");
   },
-  async forgotPassword(email: string): Promise<{ ok: true }> {
-    return delay({ ok: true });
+  async updatePassword(input: any): Promise<{ message: string }> {
+    return request<{ message: string }>("/auth/password", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+  },
+  async updateProfile(input: any): Promise<AuthUser> {
+    return request<AuthUser>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
   },
 };
 
 /* ---------- Products ---------- */
 export const productApi = {
   async list(): Promise<Product[]> {
-    // TODO: GET `${API_BASE_URL}/products`
     return delay(PRODUCTS);
   },
   async byId(id: string): Promise<Product | undefined> {
@@ -95,9 +155,6 @@ export const sellApi = {
       expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
     });
   },
-  async accept(quoteId: string): Promise<{ orderId: string }> {
-    return delay({ orderId: "S-" + quoteId });
-  },
 };
 
 /* ---------- Account ---------- */
@@ -111,15 +168,6 @@ export type Transaction = {
 };
 
 export const accountApi = {
-  async profile(): Promise<AuthUser> {
-    return delay({
-      id: "u_demo",
-      email: "demo@polyusvault.com",
-      firstName: "Demo",
-      lastName: "User",
-      balance: 12450.75,
-    });
-  },
   async transactions(): Promise<Transaction[]> {
     return delay([
       {
@@ -130,39 +178,6 @@ export const accountApi = {
         amount: -2480,
         status: "Completed",
       },
-      {
-        id: "T-10288",
-        date: "2026-04-21",
-        type: "Deposit",
-        description: "Wire transfer",
-        amount: 5000,
-        status: "Completed",
-      },
-      {
-        id: "T-10271",
-        date: "2026-04-15",
-        type: "Sell",
-        description: "10 oz Silver Bar",
-        amount: 320,
-        status: "Completed",
-      },
-      {
-        id: "T-10260",
-        date: "2026-04-10",
-        type: "Buy",
-        description: "Platinum Maple Leaf",
-        amount: -1090,
-        status: "Pending",
-      },
     ]);
-  },
-  async addFunds(amount: number, method: string): Promise<{ ok: true; reference: string }> {
-    return delay({ ok: true, reference: "F-" + Date.now() });
-  },
-  async cards(): Promise<{ id: string; brand: string; last4: string; exp: string }[]> {
-    return delay([{ id: "c1", brand: "Visa", last4: "4242", exp: "08/28" }]);
-  },
-  async refer(email: string): Promise<{ ok: true }> {
-    return delay({ ok: true });
   },
 };

@@ -57,17 +57,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { AuthProvider } from "@/hooks/useAuth";
+
 function RootComponent() {
   return (
-    <CartProvider>
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <Navbar />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-        <CartDrawer />
-      </div>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+          <Navbar />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+          <CartDrawer />
+        </div>
+      </CartProvider>
+    </AuthProvider>
   );
 }
