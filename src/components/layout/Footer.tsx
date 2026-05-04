@@ -1,15 +1,15 @@
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 bg-background">
+    <footer className="border-t border-white/10 bg-neutral-950 text-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-6 py-16 md:grid-cols-4 lg:px-12">
         <div className="col-span-2">
           <div className="font-display text-2xl">
             <span className="text-gradient-gold">POLYUS</span>
-            <span className="text-foreground/80"> VAULT</span>
+            <span className="text-white/85"> VAULT</span>
           </div>
-          <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-            A trusted dealer of investment-grade precious metals. Insured vaulted storage in Zurich,
-            Singapore, and Toronto.
+          <p className="mt-4 max-w-sm text-sm text-white/60">
+            A trusted dealer of investment-grade precious metals. Insured vaulted
+            storage in Zurich, Singapore, and Toronto.
           </p>
         </div>
         {[
@@ -18,7 +18,7 @@ export function Footer() {
         ].map((col) => (
           <div key={col.t}>
             <p className="text-xs font-medium uppercase tracking-widest text-gold">{col.t}</p>
-            <ul className="mt-4 space-y-3 text-sm text-foreground/70">
+            <ul className="mt-4 space-y-3 text-sm text-white/70">
               {col.l.map((i) => (
                 <li key={i}>
                   <a href="#" className="transition-colors hover:text-gold">
@@ -30,7 +30,7 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div className="border-t border-border/60 px-6 py-6 text-center text-xs text-muted-foreground lg:px-12">
+      <div className="border-t border-white/10 px-6 py-6 text-center text-xs text-white/50 lg:px-12">
         © {new Date().getFullYear()} Polyus Vault · All prices in USD
       </div>
     </footer>
