@@ -1,53 +1,30 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, LineChart } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, LineChart, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { API_BASE_URL } from "@/lib/api";
 
 type MetalPrice = {
   name: string;
+  symbol: string;
   price: number;
   trend: "up" | "down" | "flat";
-  change: number;
+  percentage: number;
 };
 
-const BASE_PRICES = [
-  { name: "Gold", price: 2425.5 },
-  { name: "Silver", price: 31.15 },
-  { name: "Platinum", price: 1040.0 },
-  { name: "Palladium", price: 985.5 },
-  { name: "Rhodium", price: 4750.0 },
-];
+const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
 export function LivePriceTicker() {
-  const [prices, setPrices] = useState<MetalPrice[]>(
-    BASE_PRICES.map((p) => ({ ...p, trend: "flat", change: 0 })),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPrices((current) =>
-        current.map((p) => {
-          // 40% chance to fluctuate each cycle
-          if (Math.random() > 0.4) return p;
-
-          const maxFluctuation = p.price * 0.0005; // 0.05% fluctuation max
-          const change = Math.random() * maxFluctuation * 2 - maxFluctuation;
-
-          if (Math.abs(change) < 0.01) return p; // ignore tiny changes
-
-          const newPrice = p.price + change;
-          return {
-            ...p,
-            price: newPrice,
-            trend: change > 0 ? "up" : "down",
-            change: change,
-          };
-        }),
-      );
-    }, 4000); // Every 4 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  const { data, isLoading } = useQuery<MetalPrice[]>({
+    queryKey: ["tickerPrices"],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/metals/latest?currencies=${METALS_CONFIG.join(",")}`);
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    },
+    refetchInterval: 1000 * 60 * 5,
+  });
 
   const formatPrice = (p: number) =>
     new Intl.NumberFormat("en-US", {
@@ -62,49 +39,49 @@ export function LivePriceTicker() {
         {/* Label */}
         <div className="flex items-center space-x-2 border-r border-border/60 pr-5 shrink-0 h-full">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 ${isLoading ? 'hidden' : ''}`}></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
           </span>
           <span className="text-xs font-semibold uppercase tracking-[0.15em] text-gold whitespace-nowrap">
-            Live Ask Price
-          </span>  <Link
-            to="/live-charts"
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-gold transition-colors"
-          >
+            Live Market Chart 
+          </span>
+          <Link to="/live-charts" className="text-muted-foreground hover:text-gold transition-colors">
             <LineChart className="h-4 w-4" />
           </Link>
         </div>
 
-
         {/* Ticker Items */}
         <div className="flex-1 overflow-x-auto scrollbar-hide flex items-center h-full">
-          <div className="flex items-center space-x-6 px-4 h-full whitespace-nowrap">
-            {prices.map((m) => (
-              <div key={m.name} className="flex items-center space-x-3">
-                <span className="text-sm font-semibold text-foreground/80">{m.name}</span>
-                <AnimatePresence mode="popLayout">
-                  <motion.div
-                    key={`${m.name}-${m.trend}-${m.price.toFixed(2)}`}
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 10, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="flex items-center space-x-1.5"
-                  >
-                    <span className="font-mono text-sm font-semibold text-foreground">
+          {isLoading && !data ? (
+            <div className="flex items-center px-6 space-x-2 text-muted-foreground animate-pulse">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span className="text-xs font-medium uppercase tracking-wider">Syncing Market...</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-10 px-6 h-full whitespace-nowrap">
+              {data?.map((m) => (
+                <div key={m.symbol} className="flex items-center space-x-3">
+                  <span className="text-sm font-bold text-foreground/90">{m.name}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-mono text-sm font-bold text-foreground">
                       {formatPrice(m.price)}
                     </span>
-                    {m.trend === "up" && <TrendingUp className="h-4 w-4 text-green-500" />}
-                    {m.trend === "down" && <TrendingDown className="h-4 w-4 text-destructive" />}
-                    {m.trend === "flat" && <Minus className="h-4 w-4 text-muted-foreground" />}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
+
+                    {/* Trend & Graph */}
+                    <div className={`flex items-center space-x-1 ${m.trend === "up" ? "text-emerald-500" : m.trend === "down" ? "text-rose-500" : "text-muted-foreground"
+                      }`}>
+                      {m.trend === "up" ? <TrendingUp className="h-3.5 w-3.5" /> : m.trend === "down" ? <TrendingDown className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
+                      <span className="text-[11px] font-bold">
+                        {m.trend === "up" ? "+" : ""}{m.percentage}%
+                      </span>
+
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
-
       </div>
     </div>
   );

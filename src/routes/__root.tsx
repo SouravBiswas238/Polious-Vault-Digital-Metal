@@ -3,6 +3,9 @@ import { CartProvider } from "@/features/cart/context/CartContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 import appCss from "../styles.css?url";
 
@@ -61,17 +64,19 @@ import { AuthProvider } from "@/hooks/useAuth";
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-          <Footer />
-          <CartDrawer />
-        </div>
-      </CartProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CartProvider>
+          <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <Navbar />
+            <main className="flex-1">
+              <Outlet />
+            </main>
+            <Footer />
+            <CartDrawer />
+          </div>
+        </CartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
