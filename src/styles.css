@@ -1,6 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
 
 @source "../src";
 
@@ -71,7 +71,7 @@
 :root {
   --radius: 0.5rem;
   /* Light luxury palette: warm white + champagne gold */
-  --background: oklch(96.673% 0.0135 93.003);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.18 0.015 80);
   --gold: oklch(0.74 0.14 78);
   --gold-foreground: oklch(0.99 0.005 85);
@@ -149,7 +149,7 @@
   }
 
   body {
-    background-color: var(--color-background);
+    background-color: var(--color-card);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
