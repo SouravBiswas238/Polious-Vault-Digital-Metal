@@ -254,7 +254,7 @@ export default function Register() {
 
             {step === 3 && (
               <div className="grid gap-6">
-                <Field
+                <FormField
                   icon={Lock}
                   label="Secure Password"
                   type={show ? "text" : "password"}

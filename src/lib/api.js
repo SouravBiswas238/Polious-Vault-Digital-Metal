@@ -120,19 +120,9 @@ export const accountApi = {
   },
 };
 
-function getLocalUserId() {
-  try { return JSON.parse(localStorage.getItem("user") || "{}")?._id || null; } catch { return null; }
-}
-
 export const balanceApi = {
   async get() {
-    try {
-      return await request("/account/balance");
-    } catch {
-      const userId = getLocalUserId();
-      const stored = userId ? parseFloat(localStorage.getItem(`vault_balance_${userId}`) || "0") : 0;
-      return { balance: stored, currency: "USD" };
-    }
+    return request("/auth/balance");
   },
 };
 
