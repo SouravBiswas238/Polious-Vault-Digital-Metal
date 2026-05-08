@@ -159,6 +159,32 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  button,
+  a,
+  select,
+  label[for],
+  [role="button"],
+  [role="tab"],
+  [role="option"],
+  [role="menuitem"] {
+    cursor: pointer;
+  }
+
+  input,
+  textarea {
+    cursor: text;
+  }
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+
+  [disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 @utility text-gradient-gold {
