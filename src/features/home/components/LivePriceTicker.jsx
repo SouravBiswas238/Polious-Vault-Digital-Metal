@@ -5,12 +5,6 @@ import { API_BASE_URL } from "@/lib/api";
 
 const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
-const METAL_NAMES = {
-  XAU: "Gold",
-  XAG: "Silver",
-  XPT: "Platinum",
-  XPD: "Palladium",
-};
 
 export function LivePriceTicker() {
   const { data, isLoading } = useQuery({
@@ -19,20 +13,13 @@ export function LivePriceTicker() {
       const response = await fetch(`${API_BASE_URL}/metals/latest?currencies=${METALS_CONFIG.join(",")}`);
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
-
-      // rates are metal-per-USD (e.g. XAU: 0.000523 oz per $1)
-      // invert to get USD-per-metal (price per troy oz / unit)
-      const rates = json.rates ?? {};
-      return METALS_CONFIG.map((symbol) => ({
-        symbol,
-        name: METAL_NAMES[symbol] ?? symbol,
-        price: rates[symbol] ? 1 / rates[symbol] : 0,
-        trend: "neutral",
-        percentage: "0.00",
-      }));
+      console.log(json, "json");
+      return json;
     },
     refetchInterval: 1000 * 60 * 5,
   });
+
+  console.log(data, "live ticker");
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("en-US", {

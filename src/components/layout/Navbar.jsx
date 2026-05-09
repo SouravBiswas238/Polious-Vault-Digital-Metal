@@ -62,7 +62,7 @@ export function Navbar() {
               </>
             )}
             {user && (
-              <span className="text-gold/90 font-medium">Welcome, {user.personalInfo.firstName}</span>
+              <span className="text-gold/90 font-medium">Welcome, {user?.personalInfo?.firstName || user?.name}</span>
             )}
           </div>
         </div>
@@ -111,8 +111,8 @@ export function Navbar() {
                   aria-expanded={accountOpen}
                   aria-haspopup="menu"
                 >
-                  <UserCircle2 className="h-4 w-4 text-gold/70" />
-                  {user.personalInfo.firstName}'s Account
+                  <UserCircle2 className="h-4 w-4 text-gold/70 capitalize" />
+                  {user?.personalInfo?.firstName || user?.name}'s Account
                   <ChevronDown className={`h-3.5 w-3.5 opacity-60 transition-transform ${accountOpen ? "rotate-180" : ""}`} />
                 </button>
 
@@ -128,7 +128,7 @@ export function Navbar() {
                     >
                       <div className="border-b border-white/10 px-4 py-3">
                         <div className="text-[10px] uppercase tracking-wider text-white/40">Signed in as</div>
-                        <div className="truncate text-sm font-semibold text-white">{user.personalInfo.email}</div>
+                        <div className="truncate text-sm font-semibold text-white">{user?.personalInfo?.email || user?.email}</div>
                       </div>
                       <ul className="py-1.5">
                         {accountMenu.map((m) => (
