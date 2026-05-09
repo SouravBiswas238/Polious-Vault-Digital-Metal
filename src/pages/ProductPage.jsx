@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ZoomIn, Truck, Phone, Info, ShoppingCart, CheckCircle } from "lucide-react";
 import { PRODUCTS } from "@/features/products/data/products";
@@ -29,7 +29,14 @@ function Stars({ rating, size = 20 }) {
   );
 }
 
-const TABS = ["Description", "Specifications", "Mint", "Reviews", "Storage", "Why Polyus"];
+const TABS = [
+  { label: "Description",    id: "sec-description" },
+  { label: "Specifications", id: "sec-specifications" },
+  { label: "Mint",           id: "sec-mint" },
+  { label: "Reviews",        id: "sec-reviews" },
+  { label: "Storage",        id: "sec-storage" },
+  { label: "Why Polyus",     id: "sec-why" },
+];
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -38,8 +45,37 @@ export default function ProductPage() {
   const product = PRODUCTS.find((p) => p.id === id);
   const [activeThumb, setActiveThumb] = useState(0);
   const [qty, setQty] = useState(1);
-  const [activeTab, setActiveTab] = useState("Description");
+  const [activeTab, setActiveTab] = useState("sec-description");
   const [added, setAdded] = useState(false);
+  const tabBarRef = useRef(null);
+  const sectionRefs = useRef({});
+
+  useEffect(() => {
+    const observers = [];
+    TABS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      sectionRefs.current[id] = el;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveTab(id);
+        },
+        { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const tabBar = tabBarRef.current;
+    const offset = tabBar ? tabBar.offsetHeight + 80 : 100;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
 
   if (!product) {
     return (
@@ -339,112 +375,191 @@ export default function ProductPage() {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="mt-12">
-          <div className="border-b border-gray-200 flex gap-0 overflow-x-auto">
-            {TABS.map((tab) => (
+        {/* Sticky tab navigation bar */}
+        <div ref={tabBarRef} className="sticky top-16 z-20 mt-12 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex gap-0 overflow-x-auto">
+            {TABS.map(({ label, id }) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={id}
+                onClick={() => scrollToSection(id)}
                 className={`px-6 py-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200 ${
-                  activeTab === tab
+                  activeTab === id
                     ? "border-[#1e3a5f] text-[#1e3a5f]"
                     : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
                 }`}
               >
-                {tab}
+                {label}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="py-8 text-base text-gray-700 leading-relaxed max-w-3xl">
-            {activeTab === "Description" && (
-              <p>{product.description}</p>
-            )}
+        {/* All sections — always visible, scroll-linked */}
+        <div className="mt-10 space-y-16 text-base text-gray-700 leading-relaxed">
 
-            {activeTab === "Specifications" && product.specifications && (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+          {/* Description */}
+          <section id="sec-description">
+            <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Description</h2>
+            <p className="max-w-3xl">{product.description}</p>
+          </section>
+
+          {/* Specifications */}
+          {product.specifications && (
+            <section id="sec-specifications">
+              <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Specifications</h2>
+              <div className="border border-gray-200 rounded-2xl overflow-hidden max-w-3xl">
                 <table className="w-full text-sm">
                   <tbody>
                     {Object.entries(product.specifications).map(([key, val], i) => (
                       <tr
                         key={key}
-                        className={`border-b border-gray-100 last:border-0 ${
-                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        }`}
+                        className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
                       >
-                        <td className="px-5 py-3.5 font-semibold text-gray-700 w-44">{key}</td>
+                        <td className="px-5 py-3.5 font-semibold text-gray-700 w-48">{key}</td>
                         <td className="px-5 py-3.5 text-gray-800">{val}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
+            </section>
+          )}
 
-            {activeTab === "Mint" && (
-              <p>
+          {/* Mint */}
+          <section id="sec-mint">
+            <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Mint</h2>
+            {product.mintInfo ? (
+              <div className="space-y-5 max-w-3xl">
+                <div className="flex flex-wrap items-start gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div className="min-w-40">
+                    <p className="text-xs uppercase tracking-widest font-bold text-gray-400 mb-3">Mint Details</p>
+                    <p className="font-bold text-gray-900 text-lg leading-snug">{product.mintInfo.name}</p>
+                    {product.mintInfo.founded && (
+                      <p className="text-sm text-gray-500 mt-1">Est. {product.mintInfo.founded}</p>
+                    )}
+                    {product.mintInfo.location && (
+                      <p className="text-sm text-gray-500">{product.mintInfo.location}</p>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-700 leading-relaxed text-sm">{product.mintInfo.body}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 italic">
+                  All products from {product.mintInfo.name} undergo rigorous quality control and independent assay verification before leaving the mint facility. Polyus Vault is an authorized distributor.
+                </p>
+              </div>
+            ) : (
+              <p className="max-w-3xl">
                 This product is minted by{" "}
                 <strong className="text-gray-900">
                   {product.specifications?.Mint || "a certified mint"}
                 </strong>
-                , ensuring the highest standards of quality, purity, and craftsmanship. Each piece
-                undergoes rigorous quality control and assay verification before it leaves the mint
-                facility.
+                , ensuring the highest standards of quality, purity, and craftsmanship.
               </p>
             )}
+          </section>
 
-            {activeTab === "Reviews" && (
-              <div id="reviews">
-                <div className="flex items-center gap-4 mb-8 p-5 bg-gray-50 rounded-2xl">
-                  <div className="text-center">
-                    <p className="text-5xl font-black text-gray-900">
-                      {product.rating.toFixed(1)}
-                    </p>
-                    <Stars rating={product.rating} size={22} />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {product.reviewCount} reviews
-                    </p>
-                  </div>
+          {/* Reviews */}
+          <section id="sec-reviews">
+            <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">
+              Customer Reviews
+            </h2>
+            <div className="space-y-6 max-w-3xl">
+              {/* Rating summary */}
+              <div className="flex items-center gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+                <div className="text-center shrink-0">
+                  <p className="text-6xl font-black text-gray-900 leading-none">
+                    {product.rating.toFixed(1)}
+                  </p>
+                  <Stars rating={product.rating} size={22} />
+                  <p className="text-xs text-gray-500 mt-1.5">{product.reviewCount} reviews</p>
                 </div>
-                <p className="text-gray-400 italic text-sm">
-                  Customer reviews are being loaded…
-                </p>
+                <div className="flex-1 hidden sm:block">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = (product.reviews || []).filter((r) => Math.round(r.rating) === star).length;
+                    const pct = product.reviews?.length
+                      ? Math.round((count / product.reviews.length) * 100)
+                      : star === 5 ? 90 : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-2.5 mb-1.5">
+                        <span className="text-xs text-gray-500 w-4 text-right">{star}</span>
+                        <span className="text-amber-400 text-xs">★</span>
+                        <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div className="bg-amber-400 h-full rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-xs text-gray-400 w-6">{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
 
-            {activeTab === "Storage" && (
-              <div className="space-y-4">
-                <p>
-                  Proper storage of precious metals is essential to maintain their condition and
-                  value. Store your {product.metal.toLowerCase()} in a cool, dry environment away
-                  from direct sunlight and humidity.
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-gray-600">
-                  <li>Use cotton gloves when handling coins and bars to prevent fingerprints.</li>
-                  <li>Keep in original packaging or protective capsules where possible.</li>
-                  <li>For larger holdings, consider a professional vault storage solution.</li>
-                  <li>Avoid storing near chemicals, cleaning agents, or PVC materials.</li>
-                </ul>
-              </div>
-            )}
+              {/* Review cards */}
+              {product.reviews?.length > 0 ? (
+                <div className="space-y-4">
+                  {product.reviews.map((rev, i) => (
+                    <div key={i} className="border border-gray-200 rounded-2xl p-6 bg-white hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Stars rating={rev.rating} size={16} />
+                            <span className="text-xs text-gray-400 font-medium">Verified Purchase</span>
+                          </div>
+                          <p className="font-bold text-gray-900 text-base">{rev.title}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-semibold text-gray-800 text-sm">{rev.name}</p>
+                          <p className="text-xs text-gray-400">{rev.location}</p>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">{rev.text}</p>
+                      <p className="text-xs text-gray-400 mt-3">{rev.date}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 italic text-sm">No reviews yet for this product.</p>
+              )}
+            </div>
+          </section>
 
-            {activeTab === "Why Polyus" && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {[
-                  { title: "Authenticity Guaranteed", body: "Every product is 100% authentic and verifiable with a certificate of authenticity." },
-                  { title: "Competitive Pricing", body: "Our prices are updated in real-time and are among the most competitive in the market." },
-                  { title: "Insured Shipping", body: "All orders are fully insured and shipped discreetly in tamper-evident packaging." },
-                  { title: "Expert Support", body: "Our precious metals specialists are available to help you make the best investment decisions." },
-                ].map(({ title, body }) => (
-                  <div key={title} className="border border-gray-200 rounded-2xl p-5 bg-white">
-                    <p className="font-bold text-gray-900 mb-1.5">{title}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Storage */}
+          <section id="sec-storage">
+            <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Storage</h2>
+            <div className="space-y-4 max-w-3xl">
+              <p>
+                Proper storage of precious metals is essential to maintain their condition and value.
+                Store your {product.metal.toLowerCase()} in a cool, dry environment away from direct
+                sunlight and humidity.
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li>Use cotton gloves when handling coins and bars to prevent fingerprints.</li>
+                <li>Keep in original packaging or protective capsules where possible.</li>
+                <li>For larger holdings, consider a professional vault storage solution.</li>
+                <li>Avoid storing near chemicals, cleaning agents, or PVC materials.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Why Polyus */}
+          <section id="sec-why" className="pb-16">
+            <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Why Polyus</h2>
+            <div className="grid sm:grid-cols-2 gap-4 max-w-3xl">
+              {[
+                { title: "Authenticity Guaranteed", body: "Every product is 100% authentic and verifiable with a certificate of authenticity." },
+                { title: "Competitive Pricing", body: "Our prices are updated in real-time and are among the most competitive in the market." },
+                { title: "Insured Shipping", body: "All orders are fully insured and shipped discreetly in tamper-evident packaging." },
+                { title: "Expert Support", body: "Our precious metals specialists are available to help you make the best investment decisions." },
+              ].map(({ title, body }) => (
+                <div key={title} className="border border-gray-200 rounded-2xl p-5 bg-white hover:shadow-md transition-shadow">
+                  <p className="font-bold text-gray-900 mb-1.5">{title}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
         </div>
       </div>
     </div>
