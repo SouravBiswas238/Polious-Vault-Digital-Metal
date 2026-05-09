@@ -1,16 +1,66 @@
-import { TrendingUp, TrendingDown, Minus, LineChart, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BarChart2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { API_BASE_URL } from "@/lib/api";
 
 const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
-const METAL_NAMES = {
-  XAU: "Gold",
-  XAG: "Silver",
-  XPT: "Platinum",
-  XPD: "Palladium",
+const METAL_META = {
+  XAU: { name: "Gold",      symbol: "Au", unit: "oz", color: "oklch(0.74 0.14 78)" },
+  XAG: { name: "Silver",    symbol: "Ag", unit: "oz", color: "oklch(0.72 0.01 260)" },
+  XPT: { name: "Platinum",  symbol: "Pt", unit: "oz", color: "oklch(0.68 0.04 250)" },
+  XPD: { name: "Palladium", symbol: "Pd", unit: "oz", color: "oklch(0.65 0.08 200)" },
 };
+
+const fmt = (n) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+
+function PriceCard({ metal, isLoading }) {
+  const meta = METAL_META[metal.symbol] ?? { name: metal.symbol, symbol: metal.symbol, unit: "oz" };
+  const isUp = metal.trend === "up";
+  const isDown = metal.trend === "down";
+  const trendColor = isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-white/40";
+  const bgTrend = isUp ? "bg-emerald-500/10" : isDown ? "bg-rose-500/10" : "bg-white/5";
+
+  return (
+    <Link
+      to="/live-charts"
+      className="group flex flex-1 min-w-40 flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-4 transition-all hover:border-gold/40 hover:bg-white/8"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white"
+            style={{ backgroundColor: meta.color + "33", color: meta.color }}
+          >
+            {meta.symbol}
+          </span>
+          <span className="text-sm font-semibold text-white/90">{meta.name}</span>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-white/30">{meta.unit}</span>
+      </div>
+
+      {isLoading ? (
+        <div className="h-6 w-28 animate-pulse rounded bg-white/10" />
+      ) : (
+        <div className="flex items-end justify-between">
+          <span className="font-mono text-xl font-bold tabular-nums text-white">
+            {fmt(metal.price)}
+          </span>
+          <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${bgTrend} ${trendColor}`}>
+            {isUp ? <TrendingUp className="h-3 w-3" /> : isDown ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+            {metal.trend === "up" ? "+" : ""}{metal.percentage}%
+          </div>
+        </div>
+      )}
+    </Link>
+  );
+}
 
 export function LivePriceTicker() {
   const { data, isLoading } = useQuery({
@@ -19,13 +69,9 @@ export function LivePriceTicker() {
       const response = await fetch(`${API_BASE_URL}/metals/latest?currencies=${METALS_CONFIG.join(",")}`);
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
-
-      // rates are metal-per-USD (e.g. XAU: 0.000523 oz per $1)
-      // invert to get USD-per-metal (price per troy oz / unit)
       const rates = json.rates ?? {};
       return METALS_CONFIG.map((symbol) => ({
         symbol,
-        name: METAL_NAMES[symbol] ?? symbol,
         price: rates[symbol] ? 1 / rates[symbol] : 0,
         trend: "neutral",
         percentage: "0.00",
@@ -34,53 +80,41 @@ export function LivePriceTicker() {
     refetchInterval: 1000 * 60 * 5,
   });
 
-  const formatPrice = (p) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(p);
+  const skeletons = METALS_CONFIG.map((s) => ({ symbol: s, price: 0, trend: "neutral", percentage: "0.00" }));
+  const cards = data ?? skeletons;
 
   return (
-    <div className="w-full border-b border-border/60 bg-card overflow-hidden">
-      <div className="mx-auto flex max-w-7xl items-center px-6 lg:px-12 h-14">
-        <div className="flex items-center space-x-2 border-r border-border/60 pr-5 shrink-0 h-full">
-          <span className="relative flex h-2 w-2">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 ${isLoading ? 'hidden' : ''}`}></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
-          </span>
-          <span className="text-xs font-semibold uppercase tracking-[0.15em] text-gold whitespace-nowrap">
-            Live Market Chart
-          </span>
-          <Link to="/live-charts" className="text-muted-foreground hover:text-gold transition-colors">
-            <LineChart className="h-4 w-4" />
-          </Link>
-        </div>
+    <div className="w-full bg-[oklch(0.17_0.04_255)] border-b border-white/8">
+      <div className="mx-auto max-w-7xl px-4 lg:px-12 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          {/* Label */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="relative flex h-2 w-2">
+              {!isLoading && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+              )}
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-gold" />
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold whitespace-nowrap">
+              Live Prices
+            </span>
+            <Link to="/live-charts" className="flex items-center gap-1 text-[11px] text-white/40 hover:text-gold transition-colors">
+              <BarChart2 className="h-3.5 w-3.5" /> View Charts
+            </Link>
+          </div>
 
-        <div className="flex-1 overflow-x-auto scrollbar-hide flex items-center h-full">
-          {isLoading && !data ? (
-            <div className="flex items-center px-6 space-x-2 text-muted-foreground animate-pulse">
+          {/* Price cards */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-3">
+            {isLoading
+              ? skeletons.map((m) => <PriceCard key={m.symbol} metal={m} isLoading />)
+              : cards.map((m) => <PriceCard key={m.symbol} metal={m} isLoading={false} />)
+            }
+          </div>
+
+          {isLoading && (
+            <div className="flex items-center gap-2 text-white/30 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="text-xs font-medium uppercase tracking-wider">Syncing Market...</span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-10 px-6 h-full whitespace-nowrap">
-              {data?.map((m) => (
-                <div key={m.symbol} className="flex items-center space-x-3">
-                  <span className="text-sm font-bold text-foreground/90">{m.name}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono text-sm font-bold text-foreground">
-                      {formatPrice(m.price)}
-                    </span>
-                    <div className={`flex items-center space-x-1 ${m.trend === "up" ? "text-emerald-500" : m.trend === "down" ? "text-rose-500" : "text-muted-foreground"}`}>
-                      {m.trend === "up" ? <TrendingUp className="h-3.5 w-3.5" /> : m.trend === "down" ? <TrendingDown className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
-                      <span className="text-[11px] font-bold">
-                        {m.trend === "up" ? "+" : ""}{m.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              Syncing…
             </div>
           )}
         </div>

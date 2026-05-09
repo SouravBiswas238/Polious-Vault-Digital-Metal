@@ -1,12 +1,26 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Lock } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "@/features/cart/context/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQty, total, count } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    if (!user) {
+      closeCart();
+      navigate("/login?redirect=checkout");
+    } else {
+      // TODO: navigate to checkout page when implemented
+      alert("Checkout coming soon!");
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -137,13 +151,27 @@ export function CartDrawer() {
                     {fmt(total)}
                   </span>
                 </div>
+
+                {!user && (
+                  <div className="mt-4 flex items-start gap-2 rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm">
+                    <LogIn className="h-4 w-4 mt-0.5 text-gold shrink-0" />
+                    <p className="text-foreground/80">
+                      <span className="font-semibold text-foreground">Login required</span> to complete your purchase. Your cart will be saved.
+                    </p>
+                  </div>
+                )}
+
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gold py-4 text-sm font-semibold text-gold-foreground transition-shadow hover:shadow-[0_10px_40px_-10px_oklch(0.78_0.13_80/0.6)]"
+                  onClick={handleCheckout}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gold py-4 text-sm font-semibold text-gold-foreground transition-shadow hover:shadow-[0_10px_40px_-10px_oklch(0.78_0.13_80/0.6)]"
                 >
-                  <Lock className="h-4 w-4" />
-                  Secure Checkout
+                  {user ? (
+                    <><Lock className="h-4 w-4" /> Secure Checkout</>
+                  ) : (
+                    <><LogIn className="h-4 w-4" /> Sign In to Checkout</>
+                  )}
                 </motion.button>
                 <p className="mt-3 text-center text-xs text-muted-foreground">
                   KYC verification required · Insured by Lloyd's of London

@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, ShoppingBag } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import FormField from "@/components/shared/FormField";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const { login: setAuth } = useAuth();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,8 @@ export default function Login() {
     try {
       const data = await authApi.login(form);
       setAuth(data);
-      navigate("/account/transactions");
+      // If coming from checkout redirect, go back to home so user can re-open cart
+      navigate(redirect === "checkout" ? "/" : "/account/transactions");
     } catch (err) {
       setError(err?.message ?? "Login failed");
     } finally {
@@ -56,6 +59,16 @@ export default function Login() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-10">
+          {redirect === "checkout" && (
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3.5">
+              <ShoppingBag className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-foreground">Sign in to complete your order</p>
+                <p className="mt-0.5 text-muted-foreground">Your cart items are saved and ready for checkout.</p>
+              </div>
+            </div>
+          )}
+
           <h2 className="font-display text-3xl font-semibold">Log In</h2>
           <p className="mt-1 text-sm text-muted-foreground">Enter your credentials to continue</p>
 
@@ -90,7 +103,7 @@ export default function Login() {
                   type="checkbox"
                   checked={form.remember}
                   onChange={(e) => setForm({ ...form, remember: e.target.checked })}
-                  className="h-4 w-4 rounded border-border accent-[var(--gold)]"
+                  className="h-4 w-4 rounded border-border accent-gold"
                 />
                 Remember me
               </label>
@@ -113,7 +126,12 @@ export default function Login() {
 
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/register" className="font-semibold text-gold hover:underline">Create one</Link>
+              <Link
+                to={redirect ? `/register?redirect=${redirect}` : "/register"}
+                className="font-semibold text-gold hover:underline"
+              >
+                Create one
+              </Link>
             </p>
           </form>
         </div>
@@ -121,4 +139,3 @@ export default function Login() {
     </div>
   );
 }
-

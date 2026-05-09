@@ -11,6 +11,8 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Sell from "@/pages/Sell";
 import LiveCharts from "@/pages/LiveCharts";
+import ShopPage from "@/pages/ShopPage";
+import ProductPage from "@/pages/ProductPage";
 import Account from "@/pages/account/Account";
 import Transactions from "@/pages/account/Transactions";
 import Profile from "@/pages/account/Profile";
@@ -68,6 +70,8 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/sell" element={<Sell />} />
               <Route path="/live-charts" element={<LiveCharts />} />
+              <Route path="/shop/:metal" element={<ShopPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/account" element={<Account />}>
                 <Route index element={<Navigate to="transactions" replace />} />
                 <Route path="transactions" element={<Transactions />} />

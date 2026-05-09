@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { HeroSlider } from "@/features/home/components/HeroSlider";
 import { LivePriceTicker } from "@/features/home/components/LivePriceTicker";
-import { ProductGrid } from "@/features/products/components/ProductGrid";
+import { CategoryCards } from "@/features/products/components/CategoryCards";
+import { BestsellerCarousel } from "@/features/products/components/BestsellerCarousel";
 
 export default function Index() {
   useEffect(() => {
@@ -18,7 +19,8 @@ export default function Index() {
     <>
       <HeroSlider />
       <LivePriceTicker />
-      <ProductGrid />
+      <CategoryCards />
+      <BestsellerCarousel />
     </>
   );
 }
