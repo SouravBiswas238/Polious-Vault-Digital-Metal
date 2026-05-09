@@ -19,7 +19,6 @@ export function LivePriceTicker() {
     refetchInterval: 1000 * 60 * 5,
   });
 
-  console.log(data, "live ticker");
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("en-US", {

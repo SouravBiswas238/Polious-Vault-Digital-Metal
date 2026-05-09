@@ -14,28 +14,27 @@ const METALS_MAP = {
   Rhodium: "XRH",
 };
 
-const METALS = Object.keys(METALS_MAP);
+const METALS = Object.entries(METALS_MAP);
 
 export function MetalChartsView() {
-  const [activeMetal, setActiveMetal] = useState("Gold");
+  const [activeMetal, setActiveMetal] = useState("XAU");
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["metalHistory"],
+    queryKey: ["metalHistory", activeMetal],
     queryFn: async () => {
       const endDate = new Date().toISOString().split("T")[0];
       const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0];
-      const currencies = Object.values(METALS_MAP).join(",");
       const response = await fetch(
-        `${API_BASE_URL}/metals/timeseries?start_date=${startDate}&end_date=${endDate}&currencies=${currencies}`
+        `${API_BASE_URL}/metals/historical/?start_date=${startDate}&end_date=${endDate}&currencies=${activeMetal}`
       );
       if (!response.ok) throw new Error("Failed to fetch market data");
       return response.json();
     },
     staleTime: 1000 * 60 * 60,
   });
-
+  console.log(data);
   const chartConfig = {
     price: {
       label: "Price (USD)",
@@ -44,21 +43,20 @@ export function MetalChartsView() {
   };
 
   const activeData = useMemo(() => {
-    if (!data?.rates) return [];
-    const symbol = METALS_MAP[activeMetal];
-    return Object.entries(data.rates)
-      .map(([date, rates]) => {
-        const rate = rates[symbol];
-        const priceInUsd = rate ? 1 / rate : 0;
-        const d = new Date(date);
-        return {
-          date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-          price: Number(priceInUsd.toFixed(2)),
-          rawDate: date,
-        };
-      })
-      .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
-  }, [data, activeMetal]);
+    if (!data?.data) return [];
+    return data.data.map((item) => {
+      const d = new Date(item.date);
+      return {
+        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        price: item.price,
+        rawDate: item.date,
+      };
+    });
+  }, [data]);
+
+  const activeLabel = useMemo(() => {
+    return METALS.find(([_, value]) => value === activeMetal)?.[0] || activeMetal;
+  }, [activeMetal]);
 
   const { yDomain, currentPrice } = useMemo(() => {
     if (activeData.length === 0) return { yDomain: [0, 100], currentPrice: 0 };
@@ -83,13 +81,13 @@ export function MetalChartsView() {
 
       <Tabs value={activeMetal} onValueChange={setActiveMetal} className="w-full">
         <TabsList className="mb-8 grid w-full grid-cols-3 md:grid-cols-5 h-auto p-1 bg-secondary/50">
-          {METALS.map((metal) => (
+          {METALS.map(([label, value]) => (
             <TabsTrigger
-              key={metal}
-              value={metal}
+              key={value}
+              value={value}
               className="py-2.5 text-sm md:text-base data-[state=active]:bg-background data-[state=active]:text-gold data-[state=active]:shadow-sm"
             >
-              {metal}
+              {label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -97,7 +95,7 @@ export function MetalChartsView() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[500px] flex flex-col">
           <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <h3 className="font-display text-2xl font-semibold">{activeMetal} (30 Days)</h3>
+              <h3 className="font-display text-2xl font-semibold">{activeLabel} (30 Days)</h3>
               <p className="text-3xl font-mono text-gold mt-2">
                 ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 <span className="text-sm font-sans text-muted-foreground ml-2">Current Ask</span>
