@@ -107,8 +107,9 @@ export default function Login() {
                 />
                 Remember me
               </label>
-              <a href="#" className="font-semibold text-gold hover:underline">Forgot password?</a>
+              <Link to="/forgot-password" title="Forgot password?" className="font-semibold text-gold hover:underline">Forgot password?</Link>
             </div>
+
 
             {error && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">

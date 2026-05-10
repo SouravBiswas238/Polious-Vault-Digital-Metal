@@ -2,9 +2,16 @@ import { TrendingUp, TrendingDown, Minus, BarChart2, Loader2 } from "lucide-reac
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { API_BASE_URL } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
+const METAL_META = {
+  XAU: { name: "Gold", symbol: "XAU", unit: "oz", color: "#EAB308" },
+  XAG: { name: "Silver", symbol: "XAG", unit: "oz", color: "#94A3B8" },
+  XPT: { name: "Platinum", symbol: "XPT", unit: "oz", color: "#94A3B8" },
+  XPD: { name: "Palladium", symbol: "XPD", unit: "oz", color: "#94A3B8" },
+};
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", {
@@ -15,11 +22,29 @@ const fmt = (n) =>
   }).format(n);
 
 function PriceCard({ metal, isLoading }) {
-  const meta = METAL_META[metal.symbol] ?? { name: metal.symbol, symbol: metal.symbol, unit: "oz" };
-  const isUp = metal.trend === "up";
-  const isDown = metal.trend === "down";
+  const meta = METAL_META[metal?.symbol] ?? { name: metal?.symbol || "...", symbol: metal?.symbol || "...", unit: "oz", color: "#ffffff" };
+  const isUp = metal?.trend === "up";
+  const isDown = metal?.trend === "down";
   const trendColor = isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-white/40";
   const bgTrend = isUp ? "bg-emerald-500/10" : isDown ? "bg-rose-500/10" : "bg-white/5";
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 min-w-40 flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-7 w-7 rounded-full" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="h-3 w-8" />
+        </div>
+        <div className="flex items-end justify-between mt-auto">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-5 w-12 rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Link
@@ -39,19 +64,15 @@ function PriceCard({ metal, isLoading }) {
         <span className="text-[10px] uppercase tracking-wider text-white/30">{meta.unit}</span>
       </div>
 
-      {isLoading ? (
-        <div className="h-6 w-28 animate-pulse rounded bg-white/10" />
-      ) : (
-        <div className="flex items-end justify-between">
-          <span className="font-mono text-xl font-bold tabular-nums text-white">
-            {fmt(metal.price)}
-          </span>
-          <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${bgTrend} ${trendColor}`}>
-            {isUp ? <TrendingUp className="h-3 w-3" /> : isDown ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-            {metal.trend === "up" ? "+" : ""}{metal.percentage}%
-          </div>
+      <div className="flex items-end justify-between">
+        <span className="font-mono text-xl font-bold tabular-nums text-white">
+          {fmt(metal.price)}
+        </span>
+        <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${bgTrend} ${trendColor}`}>
+          {isUp ? <TrendingUp className="h-3 w-3" /> : isDown ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+          {metal.trend === "up" ? "+" : ""}{metal.percentage}%
         </div>
-      )}
+      </div>
     </Link>
   );
 }
@@ -63,19 +84,12 @@ export function LivePriceTicker() {
       const response = await fetch(`${API_BASE_URL}/metals/latest?currencies=${METALS_CONFIG.join(",")}`);
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
-      console.log(json, "json");
       return json;
     },
     refetchInterval: 1000 * 60 * 5,
   });
 
-
-  const formatPrice = (p) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(p);
+  const cards = data || [];
 
   return (
     <div className="w-full bg-[oklch(0.17_0.04_255)] border-b border-white/8">
@@ -100,7 +114,7 @@ export function LivePriceTicker() {
           {/* Price cards */}
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-3">
             {isLoading
-              ? skeletons.map((m) => <PriceCard key={m.symbol} metal={m} isLoading />)
+              ? METALS_CONFIG.map((symbol) => <PriceCard key={symbol} metal={{ symbol }} isLoading />)
               : cards.map((m) => <PriceCard key={m.symbol} metal={m} isLoading={false} />)
             }
           </div>
@@ -116,3 +130,4 @@ export function LivePriceTicker() {
     </div>
   );
 }
+

@@ -20,6 +20,12 @@ import CreditCard from "@/pages/account/CreditCard";
 import AddFunds from "@/pages/account/AddFunds";
 import Refer from "@/pages/account/Refer";
 import Admin from "@/pages/Admin";
+import SkeletonDemo from "@/pages/SkeletonDemo";
+import ResetPassword from "@/pages/ResetPassword";
+import ForgotPassword from "@/pages/ForgotPassword";
+
+
+
 
 const queryClient = new QueryClient();
 
@@ -72,7 +78,13 @@ export default function App() {
               <Route path="/live-charts" element={<LiveCharts />} />
               <Route path="/shop/:metal" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/skeleton-demo" element={<SkeletonDemo />} />
+              <Route path="/resetpassword/:token" element={<ResetPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/account" element={<Account />}>
+
+
+
                 <Route index element={<Navigate to="transactions" replace />} />
                 <Route path="transactions" element={<Transactions />} />
                 <Route path="profile" element={<Profile />} />
