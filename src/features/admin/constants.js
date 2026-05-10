@@ -1,5 +1,5 @@
-export const ADMIN_EMAIL = "admin@polyusvault.com";
-export const ADMIN_PASSWORD = "admin2024";
+export const ADMIN_EMAIL = "admin@gmail.com"
+export const ADMIN_PASSWORD = "1234";
 export const PRESETS = [100, 500, 1000, 5000, 10000];
 
 export function formatUSD(n) {

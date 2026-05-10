@@ -11,6 +11,8 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Sell from "@/pages/Sell";
 import LiveCharts from "@/pages/LiveCharts";
+import ShopPage from "@/pages/ShopPage";
+import ProductPage from "@/pages/ProductPage";
 import Account from "@/pages/account/Account";
 import Transactions from "@/pages/account/Transactions";
 import Profile from "@/pages/account/Profile";
@@ -41,7 +43,7 @@ function NotFound() {
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          The page you're looking for doesn't exist or has been moved .
         </p>
         <div className="mt-6">
           <a
@@ -68,6 +70,8 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/sell" element={<Sell />} />
               <Route path="/live-charts" element={<LiveCharts />} />
+              <Route path="/shop/:metal" element={<ShopPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/account" element={<Account />}>
                 <Route index element={<Navigate to="transactions" replace />} />
                 <Route path="transactions" element={<Transactions />} />

@@ -19,7 +19,7 @@ const accountMenu = [
 ];
 
 const navLinks = [
-  { to: "/", label: "Buy", icon: ShoppingCart },
+  { to: "/shop/gold", label: "Buy", icon: ShoppingCart },
   { to: "/sell", label: "Sell", icon: Tag },
   { to: "/live-charts", label: "Charts", icon: BarChart2 },
 ];
