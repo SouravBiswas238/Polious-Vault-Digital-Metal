@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Mail, Lock, User, Phone, ShieldCheck, Eye, EyeOff, Building2,
   CheckCircle2, ChevronRight, ChevronLeft, Briefcase, Calendar, Flag, MapPin,
+  Gift,
 } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { countries } from "countries-list";
@@ -28,6 +29,9 @@ const ACCOUNT_TYPES = [
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref");
+  
   const { login: setAuth } = useAuth();
   const [step, setStep] = useState(0);
   const [show, setShow] = useState(false);
@@ -49,6 +53,7 @@ export default function Register() {
     marketingPreferences: { subscribeNewsletters: true, subscribePromotions: false },
     agreements: { termsAccepted: false, amlPolicyAccepted: false },
     password: "",
+    referralCode: referralCode || "", // Added referralCode to form
   });
 
   const validateStep = (currentStep) => {
@@ -118,6 +123,11 @@ export default function Register() {
             {step === 2 && "Enter your business registration details."}
             {step === 3 && "Finalize your account and security settings."}
           </p>
+          {referralCode && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500 ring-1 ring-emerald-500/20">
+              <Gift className="h-3 w-3" /> You're getting a $50 welcome bonus!
+            </div>
+          )}
         </div>
 
         <div className="mt-8 flex gap-2 px-1">

@@ -15,22 +15,24 @@ export default function Index() {
       // 1. Get info from LocalStorage
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
 
-      console.log(userData.personalInfo?.email)
-      if (userData.personalInfo?.email) {
+      if (userData?.personalInfo?.email) {
         window.ssq = window.ssq || [];
-        // 2. Pass info to SaleSmartly
+        // 2. Pass info to SaleSmartly with correct mapping
         window.ssq.push('setCustomer', {
-          user_id: userData._id || userData.email, // Unique ID
-          name: userData.personalInfo.firstName + " " + userData.personalInfo.lastName || 'Guest User',
-          email: userData.email,
-          phone: userData.mobile || '',
+          user_id: userData._id || userData.personalInfo.email,
+          name: `${userData.personalInfo.firstName} ${userData.personalInfo.lastName}`.trim() || 'Guest User',
+          email: userData.personalInfo.email,
+          phone: userData.personalInfo.phoneNumber || '',
           description: "Logged in via Main Dashboard"
         });
       }
     };
 
     return () => {
-      document.body.removeChild(script);
+      // Check if script exists before trying to remove it
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 

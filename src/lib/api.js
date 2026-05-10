@@ -60,6 +60,9 @@ export const authApi = {
       body: JSON.stringify(input),
     });
   },
+  async getReferralStats() {
+    return request("/auth/referral-stats");
+  },
 };
 
 export const productApi = {
