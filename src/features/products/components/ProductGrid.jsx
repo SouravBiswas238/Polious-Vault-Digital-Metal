@@ -35,7 +35,7 @@ export function ProductGrid() {
           <button
             key={m.key}
             onClick={() => setActive(m.key)}
-            className={`relative rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+            className={`relative rounded-full px-5 py-2 text-sm font-medium border border-gold transition-colors ${
               active === m.key
                 ? "bg-foreground text-background"
                 : "text-foreground/70 hover:text-gold"

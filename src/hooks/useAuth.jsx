@@ -36,6 +36,9 @@ export function AuthProvider({ children }) {
           email: userData.personalInfo?.email || userData.email || "",
           firstName: userData.personalInfo?.firstName || "",
           lastName: userData.personalInfo?.lastName || "",
+          mobile: userData.personalInfo?.mobile || "",
+          role: userData.personalInfo?.role || "",
+          status: userData.personalInfo?.status || "",
         });
         localStorage.setItem("admin_user_registry", JSON.stringify(registry));
       }
