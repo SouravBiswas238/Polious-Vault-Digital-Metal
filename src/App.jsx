@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/features/cart/context/CartContext";
@@ -47,6 +47,15 @@ function Layout() {
   );
 }
 
+function ProtectedRoute() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+  if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  return <Outlet />;
+}
+
 function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -86,16 +95,15 @@ export default function App() {
               <Route path="/skeleton-demo" element={<SkeletonDemo />} />
               <Route path="/resetpassword/:token" element={<ResetPassword />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/account" element={<Account />}>
-
-
-
-                <Route index element={<Navigate to="transactions" replace />} />
-                <Route path="transactions" element={<Transactions />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="credit-card" element={<CreditCard />} />
-                <Route path="add-funds" element={<AddFunds />} />
-                <Route path="refer" element={<Refer />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/account" element={<Account />}>
+                  <Route index element={<Navigate to="transactions" replace />} />
+                  <Route path="transactions" element={<Transactions />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="credit-card" element={<CreditCard />} />
+                  <Route path="add-funds" element={<AddFunds />} />
+                  <Route path="refer" element={<Refer />} />
+                </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
             </Route>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, ShoppingBag } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/features/cart/context/CartContext";
 import FormField from "@/components/shared/FormField";
 
 export default function Login() {
@@ -10,6 +11,7 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get("redirect");
   const { login: setAuth } = useAuth();
+  const { openCart } = useCart();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,8 +24,14 @@ export default function Login() {
     try {
       const data = await authApi.login(form);
       setAuth(data);
-      // If coming from checkout redirect, go back to home so user can re-open cart
-      navigate(redirect === "checkout" ? "/" : "/account/transactions");
+      if (redirect === "checkout") {
+        navigate("/");
+        setTimeout(() => openCart(), 100);
+      } else if (redirect && redirect.startsWith("/")) {
+        navigate(redirect);
+      } else {
+        navigate("/account/transactions");
+      }
     } catch (err) {
       setError(err?.message ?? "Login failed");
     } finally {

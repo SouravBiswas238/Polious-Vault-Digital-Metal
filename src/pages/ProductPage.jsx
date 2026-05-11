@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
+
 import { ChevronLeft, ChevronRight, ZoomIn, Truck, Phone, Info, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
 import { productApi } from "@/lib/api";
 import { useCart } from "@/features/cart/context/CartContext";
@@ -41,6 +42,8 @@ const TABS = [
 export default function ProductPage() {
   const { id } = useParams();
   const { addItem } = useCart();
+
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
