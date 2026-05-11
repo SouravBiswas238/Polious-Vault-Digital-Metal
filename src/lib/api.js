@@ -1,11 +1,8 @@
-import { PRODUCTS } from "@/features/products/data/products";
-
 export const API_BASE_URL =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) || "http://localhost:5000/api";
 
-async function delay(value, ms = 350) {
-  return new Promise((res) => setTimeout(() => res(value), ms));
-}
+const delay = (value, ms = 350) =>
+  new Promise((res) => setTimeout(() => res(value), ms));
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");
@@ -66,11 +63,12 @@ export const authApi = {
 };
 
 export const productApi = {
-  async list() {
-    return delay(PRODUCTS);
+  async list(metal) {
+    const qs = metal ? `?metal=${encodeURIComponent(metal)}` : "";
+    return request(`/products${qs}`);
   },
   async byId(id) {
-    return delay(PRODUCTS.find((p) => p.id === id));
+    return request(`/products/${id}`);
   },
 };
 
@@ -142,6 +140,26 @@ export const adminApi = {
     return request(`/admin/users/${userId}/add-balance`, {
       method: "POST",
       body: JSON.stringify({ amount }),
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
+  },
+  async createProduct(data) {
+    return request("/admin/products", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
+  },
+  async updateProduct(id, data) {
+    return request(`/admin/products/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
+  },
+  async deleteProduct(id) {
+    return request(`/admin/products/${id}`, {
+      method: "DELETE",
       headers: { "x-admin-key": ADMIN_KEY },
     });
   },

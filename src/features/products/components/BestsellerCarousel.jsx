@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { PRODUCTS } from "@/features/products/data/products";
+import { productApi } from "@/lib/api";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", {
@@ -26,17 +26,27 @@ function Stars({ rating }) {
   );
 }
 
-const BESTSELLERS = PRODUCTS.filter((p) => p.isBestseller);
 const VISIBLE = 4;
 
 export function BestsellerCarousel() {
+  const [bestsellers, setBestsellers] = useState([]);
   const [start, setStart] = useState(0);
-  const maxStart = Math.max(0, BESTSELLERS.length - VISIBLE);
 
+  useEffect(() => {
+    productApi.list()
+      .then((data) => {
+        const all = Array.isArray(data) ? data : [];
+        setBestsellers(all.filter((p) => p.isBestseller));
+      })
+      .catch(() => {});
+  }, []);
+
+  const maxStart = Math.max(0, bestsellers.length - VISIBLE);
   const prev = () => setStart((s) => Math.max(0, s - 1));
   const next = () => setStart((s) => Math.min(maxStart, s + 1));
+  const visible = bestsellers.slice(start, start + VISIBLE);
 
-  const visible = BESTSELLERS.slice(start, start + VISIBLE);
+  if (bestsellers.length === 0) return null;
 
   return (
     <section className="bg-[#f7f7f7] py-16 border-b border-gray-200">
@@ -77,12 +87,12 @@ export function BestsellerCarousel() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {visible.map((p) => (
               <div
-                key={p.id}
+                key={p._id}
                 className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300 group"
               >
                 {/* Image area */}
                 <Link
-                  to={`/product/${p.id}`}
+                  to={`/product/${p._id}`}
                   className="relative block bg-gray-50 overflow-hidden"
                   style={{ height: 220 }}
                 >
@@ -96,33 +106,29 @@ export function BestsellerCarousel() {
 
                 {/* Card body */}
                 <div className="flex flex-col flex-1 p-5 gap-3">
-                  {/* Name */}
                   <Link
-                    to={`/product/${p.id}`}
+                    to={`/product/${p._id}`}
                     className="text-gray-900 font-semibold text-[15px] leading-snug line-clamp-2 hover:text-[#1e3a5f] transition-colors"
                   >
                     {p.name}
                   </Link>
 
-                  {/* Stars + count */}
                   <div className="flex items-center gap-2">
                     <Stars rating={p.rating} />
                     <span className="text-gray-500 text-xs">({p.reviewCount})</span>
                   </div>
 
-                  {/* Price */}
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-0.5">
                       As Low As
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {fmt(p.priceWireCheck)}
+                      {fmt(p.priceWireCheck ?? p.price)}
                     </p>
                   </div>
 
-                  {/* CTA button */}
                   <Link
-                    to={`/product/${p.id}`}
+                    to={`/product/${p._id}`}
                     className="mt-auto block w-full text-center rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold py-3.5 hover:bg-[#162c4a] active:scale-[0.98] transition-all duration-200"
                   >
                     Shop Now
@@ -131,7 +137,6 @@ export function BestsellerCarousel() {
               </div>
             ))}
 
-            {/* Empty placeholder slots to maintain grid shape */}
             {Array.from({ length: VISIBLE - visible.length }).map((_, i) => (
               <div key={`empty-${i}`} className="hidden lg:block" />
             ))}

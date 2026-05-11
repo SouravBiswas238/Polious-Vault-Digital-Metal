@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight, ShoppingCart, Info, Tag } from "lucide-react";
-import { PRODUCTS, METALS } from "@/features/products/data/products";
+import { ChevronDown, ChevronRight, ShoppingCart, Info, Tag, Loader2 } from "lucide-react";
+import { METALS } from "@/features/products/data/products";
+import { productApi } from "@/lib/api";
 import { useCart } from "@/features/cart/context/CartContext";
 
 const fmt = (n) =>
@@ -45,7 +46,7 @@ function ProductCard({ p }) {
 
   const handleAdd = (e) => {
     e.preventDefault();
-    for (let i = 0; i < qty; i++) addItem(p);
+    for (let i = 0; i < qty; i++) addItem({ ...p, id: p._id || p.id });
     setAdded(true);
     setTimeout(() => { setAdded(false); setQty(1); }, 1800);
   };
@@ -57,7 +58,7 @@ function ProductCard({ p }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image area */}
-      <Link to={`/product/${p.id}`} className="relative block overflow-hidden shrink-0">
+      <Link to={`/product/${p._id || p.id}`} className="relative block overflow-hidden shrink-0">
         {p.isGreatDeal && <GreatDealBadge />}
         <div className="h-56 flex items-center justify-center p-6 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-300">
           <img
@@ -73,7 +74,7 @@ function ProductCard({ p }) {
       <div className="flex flex-col flex-1 px-4 pb-5 pt-4 gap-2.5">
         {/* Product name */}
         <Link
-          to={`/product/${p.id}`}
+          to={`/product/${p._id || p.id}`}
           className="text-gray-900 font-semibold text-[15px] leading-snug line-clamp-2 hover:text-[#1e3a5f] transition-colors"
         >
           {p.name}
@@ -83,7 +84,7 @@ function ProductCard({ p }) {
         <div className="flex items-center gap-2">
           <Stars rating={p.rating} />
           <a
-            href={`/product/${p.id}#reviews`}
+            href={`/product/${p._id || p.id}#reviews`}
             className="text-blue-600 text-xs font-medium hover:underline underline-offset-2"
           >
             {p.reviewCount} Reviews
@@ -213,7 +214,7 @@ function ProductCard({ p }) {
   );
 }
 
-function Sidebar({ metalKey, activeSub, onSubChange }) {
+function Sidebar({ metalKey, activeSub, onSubChange, products }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMetal, setExpandedMetal] = useState(metalKey);
@@ -310,12 +311,12 @@ function Sidebar({ metalKey, activeSub, onSubChange }) {
                         {/* Leaf product links */}
                         {m.key === metalKey && activeSub === sub && (
                           <div className="ml-4 border-l border-gray-200 mb-1">
-                            {PRODUCTS.filter(
-                              (p) => p.metal === metalKey && p.subcategory === sub
+                            {(products || []).filter(
+                              (p) => p.subcategory === sub
                             ).map((p) => (
                               <Link
-                                key={p.id}
-                                to={`/product/${p.id}`}
+                                key={p._id || p.id}
+                                to={`/product/${p._id || p.id}`}
                                 className="block pl-3 pr-4 py-1.5 text-xs text-gray-500 hover:text-blue-700 hover:bg-gray-50 transition-colors truncate"
                               >
                                 {p.name}
@@ -346,6 +347,19 @@ export default function ShopPage() {
   const metalKey = metal.charAt(0).toUpperCase() + metal.slice(1);
   const metalMeta = METALS.find((m) => m.key === metalKey) || METALS[0];
 
+  const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    productApi.list(metalKey)
+      .then((data) => { if (!cancelled) setAllProducts(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setAllProducts([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [metalKey]);
+
   const handleSubChange = (sub) => {
     if (!sub) {
       setSearchParams({});
@@ -354,7 +368,7 @@ export default function ShopPage() {
     }
   };
 
-  let products = PRODUCTS.filter((p) => p.metal === metalKey);
+  let products = allProducts;
 
   if (activeSub === "instock") {
     products = products.filter((p) => p.inStock);
@@ -369,7 +383,7 @@ export default function ShopPage() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}
-          <Sidebar metalKey={metalKey} activeSub={activeSub} onSubChange={handleSubChange} />
+          <Sidebar metalKey={metalKey} activeSub={activeSub} onSubChange={handleSubChange} products={allProducts} />
 
           {/* Main content */}
           <main className="flex-1 min-w-0">
@@ -393,7 +407,7 @@ export default function ShopPage() {
                   {metalKey} Coins and Bars
                 </h1>
                 <p className="text-gray-500 text-sm mt-1">
-                  {products.length} product{products.length !== 1 ? "s" : ""} found
+                  {loading ? "Loading…" : `${products.length} product${products.length !== 1 ? "s" : ""} found`}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -443,10 +457,14 @@ export default function ShopPage() {
             </div>
 
             {/* Product grid */}
-            {products.length > 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-24">
+                <Loader2 className="h-10 w-10 animate-spin text-[#1e3a5f]" />
+              </div>
+            ) : products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {products.map((p) => (
-                  <ProductCard key={p.id} p={p} />
+                  <ProductCard key={p._id || p.id} p={p} />
                 ))}
               </div>
             ) : (

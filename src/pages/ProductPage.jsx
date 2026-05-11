@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ZoomIn, Truck, Phone, Info, ShoppingCart, CheckCircle } from "lucide-react";
-import { PRODUCTS } from "@/features/products/data/products";
+import { ChevronLeft, ChevronRight, ZoomIn, Truck, Phone, Info, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
+import { productApi } from "@/lib/api";
 import { useCart } from "@/features/cart/context/CartContext";
 
 const fmt = (n) =>
@@ -42,7 +42,9 @@ export default function ProductPage() {
   const { id } = useParams();
   const { addItem } = useCart();
 
-  const product = PRODUCTS.find((p) => p.id === id);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeThumb, setActiveThumb] = useState(0);
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState("sec-description");
@@ -51,6 +53,18 @@ export default function ProductPage() {
   const sectionRefs = useRef({});
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    productApi.byId(id)
+      .then((data) => { if (!cancelled) setProduct(data); })
+      .catch(() => { if (!cancelled) setError("Product not found."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  useEffect(() => {
+    if (!product) return;
     const observers = [];
     TABS.forEach(({ id }) => {
       const el = document.getElementById(id);
@@ -66,7 +80,7 @@ export default function ProductPage() {
       observers.push(obs);
     });
     return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  }, [product]);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -77,7 +91,15 @@ export default function ProductPage() {
     window.scrollTo({ top, behavior: "smooth" });
   };
 
-  if (!product) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-[#1e3a5f]" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -95,7 +117,7 @@ export default function ProductPage() {
   const metalKey = product.metal.toLowerCase();
 
   const handleAdd = () => {
-    for (let i = 0; i < qty; i++) addItem(product);
+    for (let i = 0; i < qty; i++) addItem({ ...product, id: product._id });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -449,7 +471,7 @@ export default function ProductPage() {
               <p className="max-w-3xl">
                 This product is minted by{" "}
                 <strong className="text-gray-900">
-                  {product.specifications?.Mint || "a certified mint"}
+                  {product.specifications?.Mint || product.specifications?.mint || "a certified mint"}
                 </strong>
                 , ensuring the highest standards of quality, purity, and craftsmanship.
               </p>

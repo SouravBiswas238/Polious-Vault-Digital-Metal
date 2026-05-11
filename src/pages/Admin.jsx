@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Receipt, Settings, AlertTriangle } from "lucide-react";
+import { Menu, Receipt, Settings, AlertTriangle, Package } from "lucide-react";
 import { adminApi } from "@/lib/api";
 import LoginScreen    from "@/features/admin/components/LoginScreen";
 import AdminSidebar   from "@/features/admin/components/AdminSidebar";
 import DashboardPage  from "@/features/admin/components/DashboardPage";
 import UsersPage      from "@/features/admin/components/UsersPage";
+import ProductsPage   from "@/features/admin/components/ProductsPage";
 import PlaceholderPage from "@/features/admin/components/PlaceholderPage";
 
 const PAGE_TITLES = {
   dashboard:    "Dashboard",
   users:        "Users",
+  products:     "Products",
   transactions: "Transactions",
   settings:     "Settings",
 };
@@ -107,6 +109,7 @@ export default function Admin() {
                   onOp={() => setOpsToday((p) => p + 1)}
                 />
               )}
+              {activePage === "products" && <ProductsPage />}
               {activePage === "transactions" && (
                 <PlaceholderPage
                   title="Transactions"

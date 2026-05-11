@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, CheckCircle2, XCircle, Star } from "lucide-react";
+import { ShoppingCart, CheckCircle2, XCircle, Star, Loader2 } from "lucide-react";
 import { useCart } from "@/features/cart/context/CartContext";
-import { METALS, PRODUCTS } from "@/features/products/data/products";
+import { productApi } from "@/lib/api";
+import { METALS } from "@/features/products/data/products";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", {
@@ -17,17 +18,29 @@ function ProductCard({ p, index }) {
   const [qty, setQty] = useState(1);
   const [hovered, setHovered] = useState(false);
 
-
-  const handleHoverEnter = ()=>{
-    console.log("hover enter")
-  }
-
   const decrement = () => setQty((q) => Math.max(1, q - 1));
   const increment = () => setQty((q) => q + 1);
 
+  // find the correct tier based on current qty
+  const activeTier = useMemo(() => {
+    if (!p.pricingTiers?.length) return null;
+    // tiers are like "1+", "5+", "10+" — pick the highest matching floor
+    const sorted = [...p.pricingTiers].sort((a, b) => {
+      const numA = parseInt(a.qty) || 0;
+      const numB = parseInt(b.qty) || 0;
+      return numA - numB;
+    });
+    let match = sorted[0];
+    for (const tier of sorted) {
+      const floor = parseInt(tier.qty) || 0;
+      if (qty >= floor) match = tier;
+    }
+    return match;
+  }, [qty, p.pricingTiers]);
+
   const handleAdd = () => {
     if (!p.inStock) return;
-    for (let i = 0; i < qty; i++) addItem(p);
+    for (let i = 0; i < qty; i++) addItem({ ...p, id: p._id || p.id, price: activeTier?.wireCheck ?? p.price });
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
@@ -40,18 +53,24 @@ function ProductCard({ p, index }) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
-      onMouseEnter={()=>handleHoverEnter()}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="group flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden transition-shadow hover:shadow-xl hover:shadow-black/8 hover:border-gold/30"
     >
       {/* Image */}
       <div className="relative aspect-4/3 overflow-hidden bg-secondary/40">
-        <img
-          src={p.image}
-          alt={p.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
+        {p.image ? (
+          <img
+            src={p.image}
+            alt={p.name}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center bg-secondary/60 text-muted-foreground text-xs">
+            No image
+          </div>
+        )}
 
         {/* Badges */}
         <div className="absolute left-3 top-3 flex gap-1.5">
@@ -65,14 +84,21 @@ function ProductCard({ p, index }) {
               In Stock
             </span>
           )}
+          {p.isBestseller && (
+            <span className="rounded-full bg-amber-500/20 border border-amber-400/40 backdrop-blur-sm px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+              Bestseller
+            </span>
+          )}
         </div>
 
         {/* Category chip */}
-        <div className="absolute right-3 top-3">
-          <span className="rounded-full bg-black/60 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-white/70 uppercase tracking-wider">
-            {p.category}
-          </span>
-        </div>
+        {p.category && (
+          <div className="absolute right-3 top-3">
+            <span className="rounded-full bg-black/60 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-white/70 uppercase tracking-wider">
+              {p.category}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -85,10 +111,12 @@ function ProductCard({ p, index }) {
           <h3 className="mt-1 font-display text-lg font-semibold leading-snug text-foreground">
             {p.name}
           </h3>
-          <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
-            <Star className="h-3 w-3 fill-gold/60 text-gold/60" />
-            {p.weight}
-          </p>
+          {p.weight && (
+            <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
+              <Star className="h-3 w-3 fill-gold/60 text-gold/60" />
+              {p.weight}
+            </p>
+          )}
         </div>
 
         {/* Price row (default) */}
@@ -106,32 +134,46 @@ function ProductCard({ p, index }) {
         >
           {/* Pricing table */}
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-secondary text-muted-foreground">
-                  <th className="py-1.5 px-2 text-left font-semibold">Qty</th>
-                  <th className="py-1.5 px-2 text-right font-semibold">Wire/Check</th>
-                  <th className="py-1.5 px-2 text-right font-semibold leading-tight">Credit Card/<br/>Paypal</th>
-                  <th className="py-1.5 px-2 text-right font-semibold">Bitcoin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {p.pricingTiers.map((tier, i) => (
-                  <tr key={i} className="border-t border-border/40">
-                    <td className="py-1.5 px-2 font-semibold text-foreground">{tier.qty}</td>
-                    <td className="py-1.5 px-2 text-right text-foreground">
-                      {typeof tier.wireCheck === "number" ? fmt(tier.wireCheck) : tier.wireCheck}
-                    </td>
-                    <td className="py-1.5 px-2 text-right text-foreground">
-                      {typeof tier.creditCard === "number" ? fmt(tier.creditCard) : tier.creditCard}
-                    </td>
-                    <td className="py-1.5 px-2 text-right text-foreground">
-                      {typeof tier.bitcoin === "number" ? fmt(tier.bitcoin) : tier.bitcoin}
-                    </td>
+            {p.pricingTiers?.length > 0 ? (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-secondary text-muted-foreground">
+                    <th className="py-1.5 px-2 text-left font-semibold">Qty</th>
+                    <th className="py-1.5 px-2 text-right font-semibold">Wire/Check</th>
+                    <th className="py-1.5 px-2 text-right font-semibold leading-tight">Credit Card/<br/>PayPal</th>
+                    <th className="py-1.5 px-2 text-right font-semibold">Bitcoin</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {p.pricingTiers.map((tier, i) => {
+                    const isActive = activeTier?.qty === tier.qty;
+                    return (
+                      <tr
+                        key={i}
+                        className={`border-t border-border/40 ${isActive ? "bg-amber-50" : ""}`}
+                      >
+                        <td className={`py-1.5 px-2 font-semibold ${isActive ? "text-amber-600" : "text-foreground"}`}>
+                          {tier.qty}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-foreground">
+                          {typeof tier.wireCheck === "number" ? fmt(tier.wireCheck) : tier.wireCheck}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-foreground">
+                          {typeof tier.creditCard === "number" ? fmt(tier.creditCard) : tier.creditCard}
+                        </td>
+                        <td className="py-1.5 px-2 text-right text-foreground">
+                          {typeof tier.bitcoin === "number" ? fmt(tier.bitcoin) : tier.bitcoin}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div className="flex items-center justify-center h-full pb-4">
+                <p className="text-xs text-muted-foreground">{fmt(p.price)} per unit</p>
+              </div>
+            )}
           </div>
 
           {/* Qty + Add to Cart */}
@@ -193,7 +235,7 @@ function ProductCard({ p, index }) {
               </button>
             )}
 
-            {p.availableInUS && (
+            {p.availableInUS === false && (
               <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                 <svg className="h-3 w-3 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
                 Currently Available in the US only.
@@ -208,8 +250,21 @@ function ProductCard({ p, index }) {
 
 export function ProductGrid() {
   const [active, setActive] = useState("Gold");
+  const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const items = useMemo(() => PRODUCTS.filter((p) => p.metal === active), [active]);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    productApi.list()
+      .then((data) => { if (!cancelled) setAllProducts(Array.isArray(data) ? data : []); })
+      .catch((err) => { if (!cancelled) setError(err.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const items = useMemo(() => allProducts.filter((p) => p.metal === active), [allProducts, active]);
   const meta = METALS.find((m) => m.key === active);
 
   return (
@@ -219,19 +274,21 @@ export function ProductGrid() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">Shop by Metal</p>
           <h2 className="mt-2 font-display text-4xl font-semibold tracking-tight md:text-5xl">
-            {meta.label}
+            {meta?.label}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">{meta.tagline}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{meta?.tagline}</p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {items.length} product{items.length !== 1 ? "s" : ""} available
-        </p>
+        {!loading && (
+          <p className="text-sm text-muted-foreground">
+            {items.length} product{items.length !== 1 ? "s" : ""} available
+          </p>
+        )}
       </div>
 
       {/* Metal tabs */}
       <div className="flex flex-wrap gap-2 border-b border-border/60 pb-0">
         {METALS.map((m) => {
-          const count = PRODUCTS.filter((p) => p.metal === m.key).length;
+          const count = allProducts.filter((p) => p.metal === m.key).length;
           const isActive = active === m.key;
           return (
             <button
@@ -254,21 +311,44 @@ export function ProductGrid() {
         })}
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="mt-16 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gold/60" />
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !loading && (
+        <div className="mt-16 text-center text-sm text-muted-foreground">
+          Could not load products. Please try again later.
+        </div>
+      )}
+
+      {/* Empty for this metal */}
+      {!loading && !error && items.length === 0 && (
+        <div className="mt-16 text-center text-sm text-muted-foreground">
+          No {active} products available yet.
+        </div>
+      )}
+
       {/* Product grid */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={active}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3 }}
-          className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {items.map((p, i) => (
-            <ProductCard key={p.id} p={p} index={i} />
-          ))}
-        </motion.div>
-      </AnimatePresence>
+      {!loading && items.length > 0 && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {items.map((p, i) => (
+              <ProductCard key={p._id || p.id} p={p} index={i} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      )}
     </section>
   );
 }

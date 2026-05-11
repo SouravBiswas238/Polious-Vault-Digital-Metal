@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, LogOut, ChevronRight,
-  LayoutDashboard, Users, Receipt, Settings,
+  LayoutDashboard, Users, Receipt, Settings, Package,
 } from "lucide-react";
 import { ADMIN_EMAIL } from "../constants";
 
 const NAV = [
   { id: "dashboard",    label: "Dashboard",    icon: LayoutDashboard },
   { id: "users",        label: "Users",         icon: Users           },
+  { id: "products",     label: "Products",      icon: Package         },
   { id: "transactions", label: "Transactions",  icon: Receipt         },
   { id: "settings",     label: "Settings",      icon: Settings        },
 ];
