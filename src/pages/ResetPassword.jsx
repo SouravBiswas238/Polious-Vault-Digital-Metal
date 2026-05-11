@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import FormField from "@/components/shared/FormField";
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -19,7 +16,7 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -35,9 +32,7 @@ export default function ResetPassword() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
 
@@ -59,118 +54,114 @@ export default function ResetPassword() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <Card className="w-full max-w-md bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardContent className="pt-10 pb-8 text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="h-20 w-20 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-              </div>
+      <div className="bg-gradient-hero min-h-[calc(100vh-5rem)] py-12 lg:py-20 flex items-center justify-center px-6">
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-xl sm:p-12 w-full max-w-md text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="h-20 w-20 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center">
+              <CheckCircle2 className="h-10 w-10 text-gold" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-white font-display">Password Reset!</h2>
-              <p className="text-white/60">Your password has been successfully updated. You can now log in with your new password.</p>
-            </div>
-            <Button 
-              className="w-full bg-gold hover:bg-gold/90 text-black font-bold h-12"
-              onClick={() => navigate('/login')}
-            >
-              Go to Login
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="space-y-2">
+            <h2 className="font-display text-3xl font-semibold">Password Reset!</h2>
+            <p className="text-sm text-muted-foreground">
+              Your password has been successfully updated. You can now log in with your new password.
+            </p>
+          </div>
+          <button
+            className="w-full rounded-md bg-foreground py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            onClick={() => navigate('/login')}
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 bg-gradient-to-b from-background to-[#0d121f]">
-      <Card className="w-full max-w-md bg-white/5 border-white/10 backdrop-blur-2xl shadow-2xl overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold/20 via-gold to-gold/20"></div>
-        
-        <CardHeader className="space-y-3 pt-8">
-          <div className="flex items-center justify-between mb-2">
-            <Link to="/login" className="text-white/40 hover:text-white transition-colors flex items-center gap-1.5 text-xs">
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Login
-            </Link>
+    <div className="bg-gradient-hero min-h-[calc(100vh-5rem)] py-12 lg:py-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 lg:grid-cols-2 lg:gap-16">
+        <div className="hidden lg:flex flex-col justify-center">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+            Account Security
+          </span>
+          <h1 className="mt-3 font-display text-5xl font-semibold leading-tight">
+            Set a new <span className="text-gradient-gold">Password</span>
+          </h1>
+          <p className="mt-5 max-w-md text-muted-foreground">
+            Choose a strong password to keep your vault secure. We recommend using a unique combination of letters, numbers, and symbols.
+          </p>
+          <div className="mt-10 grid gap-4 text-sm">
+            {[
+              "At least 6 characters long",
+              "Mix uppercase, lowercase & numbers",
+              "Use symbols for extra security",
+            ].map((t) => (
+              <div key={t} className="flex items-center gap-3 text-foreground/80">
+                <ShieldCheck className="h-5 w-5 text-gold" /> {t}
+              </div>
+            ))}
           </div>
-          <CardTitle className="text-3xl font-display font-bold text-white">Reset Password</CardTitle>
-          <CardDescription className="text-white/50">
-            Please enter your new password below.
-          </CardDescription>
-        </CardHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="password text-white/70">New Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-white/5 border-white/10 text-white pl-10 pr-10 focus:border-gold/50 transition-all h-12"
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
-                >
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-10">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Login
+          </Link>
+
+          <h2 className="font-display text-3xl font-semibold">Reset Password</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Please enter your new password below.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <FormField
+              icon={Lock}
+              label="New Password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(v) => setPassword(v)}
+              placeholder="••••••••"
+              trailing={
+                <button type="button" onClick={() => setShowPassword((v) => !v)} className="text-muted-foreground hover:text-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              }
+            />
+
+            <FormField
+              icon={Lock}
+              label="Confirm New Password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={confirmPassword}
+              onChange={(v) => setConfirmPassword(v)}
+              placeholder="••••••••"
+              error={confirmPassword && password !== confirmPassword ? "Passwords don't match" : undefined}
+            />
+
+            <div className="flex items-start gap-3 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3.5">
+              <ShieldCheck className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-foreground">Security Tip</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  Use a combination of uppercase letters, numbers, and symbols to keep your account secure.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword text-white/70">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-white/5 border-white/10 text-white pl-10 focus:border-gold/50 transition-all h-12"
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-              </div>
-              {confirmPassword && password !== confirmPassword && (
-                <p className="text-[11px] text-rose-500 flex items-center gap-1 mt-1">
-                  <AlertCircle className="h-3 w-3" /> Passwords don't match
-                </p>
-              )}
-            </div>
-            
-            <div className="p-4 rounded-lg bg-gold/5 border border-gold/10 space-y-2">
-              <p className="text-[11px] font-semibold text-gold uppercase tracking-wider">Security Tip</p>
-              <p className="text-xs text-white/60 leading-relaxed">
-                Use a combination of uppercase letters, numbers, and symbols to keep your account secure.
-              </p>
-            </div>
-          </CardContent>
-          
-          <CardFooter className="pb-8 pt-2">
-            <Button 
-              type="submit" 
-              className="w-full bg-gold hover:bg-gold/90 text-black font-bold h-12 relative overflow-hidden group shadow-[0_0_20px_rgba(234,179,8,0.15)]"
+            <button
+              type="submit"
               disabled={isLoading}
+              className="w-full rounded-md bg-foreground py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                  Updating...
-                </div>
-              ) : "Reset Password"}
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+              {isLoading ? "Updating…" : "Reset Password"}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

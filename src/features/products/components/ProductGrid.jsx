@@ -14,12 +14,25 @@ const fmt = (n) =>
 function ProductCard({ p, index }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const [qty, setQty] = useState(1);
+  const [hovered, setHovered] = useState(false);
+
+
+  const handleHoverEnter = ()=>{
+    console.log("hover enter")
+  }
+
+  const decrement = () => setQty((q) => Math.max(1, q - 1));
+  const increment = () => setQty((q) => q + 1);
 
   const handleAdd = () => {
     if (!p.inStock) return;
-    addItem(p);
+    for (let i = 0; i < qty; i++) addItem(p);
     setAdded(true);
-    setTimeout(() => setAdded(false), 1800);
+    setTimeout(() => {
+      setAdded(false);
+      setQty(1);
+    }, 1800);
   };
 
   return (
@@ -27,6 +40,8 @@ function ProductCard({ p, index }) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
+      onMouseEnter={()=>handleHoverEnter()}
+      onMouseLeave={() => setHovered(false)}
       className="group flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden transition-shadow hover:shadow-xl hover:shadow-black/8 hover:border-gold/30"
     >
       {/* Image */}
@@ -61,7 +76,8 @@ function ProductCard({ p, index }) {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col p-5">
+      <div className="relative flex flex-1 flex-col p-5 overflow-hidden">
+        {/* Default card info */}
         <div className="flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold/80">
             {p.metal}
@@ -75,61 +91,115 @@ function ProductCard({ p, index }) {
           </p>
         </div>
 
-        {/* Price + CTA */}
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Price</p>
-            <p className="font-display text-2xl font-semibold text-gradient-gold tabular-nums">
-              {fmt(p.price)}
-            </p>
+        {/* Price row (default) */}
+        <div className="mt-4 border-t border-border/50 pt-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">As Low As:</p>
+          <p className="font-display text-2xl font-semibold text-gradient-gold tabular-nums">
+            {fmt(p.price)}
+          </p>
+        </div>
+
+        {/* Hover overlay — pricing table + qty + add to cart */}
+        <div
+          className="absolute inset-0 flex flex-col bg-card p-4 transition-transform duration-300 ease-out"
+          style={{ transform: hovered ? "translateY(0)" : "translateY(100%)" }}
+        >
+          {/* Pricing table */}
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-secondary text-muted-foreground">
+                  <th className="py-1.5 px-2 text-left font-semibold">Qty</th>
+                  <th className="py-1.5 px-2 text-right font-semibold">Wire/Check</th>
+                  <th className="py-1.5 px-2 text-right font-semibold leading-tight">Credit Card/<br/>Paypal</th>
+                  <th className="py-1.5 px-2 text-right font-semibold">Bitcoin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.pricingTiers.map((tier, i) => (
+                  <tr key={i} className="border-t border-border/40">
+                    <td className="py-1.5 px-2 font-semibold text-foreground">{tier.qty}</td>
+                    <td className="py-1.5 px-2 text-right text-foreground">
+                      {typeof tier.wireCheck === "number" ? fmt(tier.wireCheck) : tier.wireCheck}
+                    </td>
+                    <td className="py-1.5 px-2 text-right text-foreground">
+                      {typeof tier.creditCard === "number" ? fmt(tier.creditCard) : tier.creditCard}
+                    </td>
+                    <td className="py-1.5 px-2 text-right text-foreground">
+                      {typeof tier.bitcoin === "number" ? fmt(tier.bitcoin) : tier.bitcoin}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <button
-            onClick={handleAdd}
-            disabled={!p.inStock}
-            aria-label={`Add ${p.name} to cart`}
-            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-semibold transition-all duration-300 ${
-              added
-                ? "bg-emerald-500 text-white scale-95"
-                : p.inStock
-                ? "bg-gold text-gold-foreground hover:shadow-[0_8px_24px_-8px_oklch(0.78_0.13_80/0.6)] hover:scale-105"
-                : "bg-secondary text-muted-foreground cursor-not-allowed"
-            }`}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {added ? (
-                <motion.span
-                  key="added"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-1.5"
+          {/* Qty + Add to Cart */}
+          <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+            {p.inStock ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-md border border-border overflow-hidden shrink-0">
+                  <button
+                    type="button"
+                    onClick={decrement}
+                    className="px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    value={qty}
+                    onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-10 bg-transparent py-2 text-center text-sm font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    aria-label="Quantity"
+                  />
+                  <button
+                    type="button"
+                    onClick={increment}
+                    className="px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleAdd}
+                  aria-label={`Add ${p.name} to cart`}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-xs font-semibold transition-all duration-300 ${
+                    added
+                      ? "bg-emerald-500 text-white"
+                      : "bg-foreground text-background hover:opacity-90"
+                  }`}
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Added!
-                </motion.span>
-              ) : p.inStock ? (
-                <motion.span
-                  key="buy"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <ShoppingCart className="h-3.5 w-3.5" /> Add to Cart
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="sold"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <XCircle className="h-3.5 w-3.5" /> Sold Out
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {added ? (
+                      <motion.span key="added" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Added!
+                      </motion.span>
+                    ) : (
+                      <motion.span key="buy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5">
+                        <ShoppingCart className="h-3.5 w-3.5" /> Add to Cart
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </div>
+            ) : (
+              <button disabled className="w-full flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-xs font-semibold bg-secondary text-muted-foreground cursor-not-allowed">
+                <XCircle className="h-3.5 w-3.5" /> Sold Out
+              </button>
+            )}
+
+            {p.availableInUS && (
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <svg className="h-3 w-3 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                Currently Available in the US only.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </motion.article>

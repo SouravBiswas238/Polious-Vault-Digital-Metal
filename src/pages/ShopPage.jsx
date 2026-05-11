@@ -40,16 +40,24 @@ function GreatDealBadge() {
 function ProductCard({ p }) {
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
+  const [hovered, setHovered] = useState(false);
+  const [added, setAdded] = useState(false);
 
   const handleAdd = (e) => {
     e.preventDefault();
     for (let i = 0; i < qty; i++) addItem(p);
+    setAdded(true);
+    setTimeout(() => { setAdded(false); setQty(1); }, 1800);
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300 group">
+    <div
+      className="relative bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300 group"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {/* Image area */}
-      <Link to={`/product/${p.id}`} className="relative block overflow-hidden">
+      <Link to={`/product/${p.id}`} className="relative block overflow-hidden shrink-0">
         {p.isGreatDeal && <GreatDealBadge />}
         <div className="h-56 flex items-center justify-center p-6 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-300">
           <img
@@ -99,17 +107,8 @@ function ProductCard({ p }) {
           </div>
         </div>
 
-        {/* US Only notice */}
-        {p.availableInUS && (
-          <p className="flex items-center gap-1.5 text-[11px] text-gray-500 bg-gray-50 rounded-lg px-2.5 py-1.5">
-            <Info className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-            Currently Available in the US only.
-          </p>
-        )}
-
-        {/* Qty + Add to Cart */}
+        {/* Qty + Add to Cart (default, no hover) */}
         <div className="flex items-stretch gap-2 mt-auto pt-1">
-          {/* Qty selector */}
           <div className="flex items-stretch border border-gray-300 rounded-lg overflow-hidden">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -127,8 +126,6 @@ function ProductCard({ p }) {
               +
             </button>
           </div>
-
-          {/* Add to cart button */}
           <button
             onClick={handleAdd}
             disabled={!p.inStock}
@@ -138,6 +135,79 @@ function ProductCard({ p }) {
             {p.inStock ? "Add to Cart" : "Sold Out"}
           </button>
         </div>
+      </div>
+
+      {/* Hover overlay — slides up from bottom over the card body */}
+      <div
+        className="absolute inset-x-0 bottom-0 bg-white border-t border-gray-200 flex flex-col px-3 pt-2 pb-3 transition-transform duration-300 ease-out shadow-lg"
+        style={{ transform: hovered ? "translateY(0)" : "translateY(100%)" }}
+      >
+        {/* Pricing table */}
+        <table className="w-full mb-2" style={{ fontSize: 10 }}>
+          <thead>
+            <tr className="bg-gray-100 text-gray-500">
+              <th className="py-1 px-1.5 text-left font-semibold">Qty</th>
+              <th className="py-1 px-1.5 text-right font-semibold">Wire/Check</th>
+              <th className="py-1 px-1.5 text-right font-semibold leading-tight">Credit Card/<br/>Paypal</th>
+              <th className="py-1 px-1.5 text-right font-semibold">Bitcoin</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.pricingTiers.map((tier, i) => (
+              <tr key={i} className="border-t border-gray-100">
+                <td className="py-1 px-1.5 font-semibold text-gray-800">{tier.qty}</td>
+                <td className="py-1 px-1.5 text-right text-gray-800 tabular-nums">
+                  {typeof tier.wireCheck === "number" ? fmt(tier.wireCheck) : tier.wireCheck}
+                </td>
+                <td className="py-1 px-1.5 text-right text-gray-800 tabular-nums">
+                  {typeof tier.creditCard === "number" ? fmt(tier.creditCard) : tier.creditCard}
+                </td>
+                <td className="py-1 px-1.5 text-right text-gray-800 tabular-nums">
+                  {typeof tier.bitcoin === "number" ? fmt(tier.bitcoin) : tier.bitcoin}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Qty + Add to Cart */}
+        <div className="flex items-stretch gap-1.5">
+          <div className="flex items-stretch border border-gray-300 rounded-md overflow-hidden">
+            <button
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              className="w-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-base font-medium"
+            >
+              −
+            </button>
+            <span className="w-7 flex items-center justify-center text-xs font-semibold text-gray-800 border-x border-gray-300 bg-white">
+              {qty}
+            </span>
+            <button
+              onClick={() => setQty((q) => q + 1)}
+              className="w-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-base font-medium"
+            >
+              +
+            </button>
+          </div>
+          <button
+            onClick={handleAdd}
+            disabled={!p.inStock}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md text-white text-xs font-semibold py-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+              added ? "bg-emerald-600" : "bg-[#1e3a5f] hover:bg-[#162c4a]"
+            }`}
+          >
+            <ShoppingCart className="h-3.5 w-3.5" />
+            {added ? "Added!" : p.inStock ? "Add to Cart" : "Sold Out"}
+          </button>
+        </div>
+
+        {/* US only notice */}
+        {p.availableInUS && (
+          <p className="flex items-center gap-1 text-[10px] text-gray-400 mt-1.5">
+            <Info className="h-3 w-3 shrink-0" />
+            Currently Available in the US only.
+          </p>
+        )}
       </div>
     </div>
   );
