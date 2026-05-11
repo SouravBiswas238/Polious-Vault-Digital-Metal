@@ -46,7 +46,7 @@ export function Navbar() {
         <div className="mx-auto flex h-8 max-w-7xl items-center justify-between px-4 lg:px-12">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <Phone className="h-3 w-3" /> 1-800-POLYUS-1
+              <Phone className="h-3 w-3" /> +447868176940
             </span>
             <span className="hidden sm:flex items-center gap-1.5">
               <Shield className="h-3 w-3 text-gold/80" />

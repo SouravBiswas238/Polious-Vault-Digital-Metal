@@ -70,7 +70,7 @@ export function Footer() {
               A trusted dealer of investment-grade precious metals with insured vaulted storage in Zurich, Singapore, and Toronto.
             </p>
             <div className="mt-6 space-y-2 text-xs text-white/40">
-              <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-gold/50" /> 1-800-POLYUS-1</div>
+              <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-gold/50" /> +447868176940</div>
               <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-gold/50" /> support@polyusvault.com</div>
               <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gold/50" /> Zurich · Singapore · Toronto</div>
             </div>

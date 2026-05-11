@@ -7,10 +7,10 @@ import { useCart } from "@/features/cart/context/CartContext";
 const fmt = (n) =>
   typeof n === "number"
     ? new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      }).format(n)
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }).format(n)
     : n;
 
 function Stars({ rating, size = 20 }) {
@@ -30,12 +30,12 @@ function Stars({ rating, size = 20 }) {
 }
 
 const TABS = [
-  { label: "Description",    id: "sec-description" },
+  { label: "Description", id: "sec-description" },
   { label: "Specifications", id: "sec-specifications" },
-  { label: "Mint",           id: "sec-mint" },
-  { label: "Reviews",        id: "sec-reviews" },
-  { label: "Storage",        id: "sec-storage" },
-  { label: "Why Polyus",     id: "sec-why" },
+  { label: "Mint", id: "sec-mint" },
+  { label: "Reviews", id: "sec-reviews" },
+  { label: "Storage", id: "sec-storage" },
+  { label: "Why Polyus", id: "sec-why" },
 ];
 
 export default function ProductPage() {
@@ -170,11 +170,10 @@ export default function ProductPage() {
                   <button
                     key={i}
                     onClick={() => setActiveThumb(i)}
-                    className={`flex-1 border-2 rounded-xl overflow-hidden flex items-center justify-center bg-gray-50 transition-all duration-200 ${
-                      activeThumb === i
+                    className={`flex-1 border-2 rounded-xl overflow-hidden flex items-center justify-center bg-gray-50 transition-all duration-200 ${activeThumb === i
                         ? "border-[#1e3a5f] shadow-md"
                         : "border-gray-200 hover:border-gray-400"
-                    }`}
+                      }`}
                     style={{ height: 88 }}
                   >
                     <img
@@ -268,13 +267,12 @@ export default function ProductPage() {
               <button
                 onClick={handleAdd}
                 disabled={!product.inStock}
-                className={`flex-1 flex items-center justify-center gap-2.5 rounded-xl font-bold text-base py-4 transition-all duration-200 shadow-sm ${
-                  added
+                className={`flex-1 flex items-center justify-center gap-2.5 rounded-xl font-bold text-base py-4 transition-all duration-200 shadow-sm ${added
                     ? "bg-green-600 text-white shadow-green-200"
                     : product.inStock
-                    ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a] hover:shadow-lg active:scale-[0.98]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
+                      ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a] hover:shadow-lg active:scale-[0.98]"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
               >
                 {added ? (
                   <>
@@ -314,9 +312,8 @@ export default function ProductPage() {
                     {product.pricingTiers.map((tier, i) => (
                       <tr
                         key={i}
-                        className={`border-b border-gray-100 last:border-0 transition-colors ${
-                          i === 0 ? "bg-blue-50/70" : "hover:bg-gray-50"
-                        }`}
+                        className={`border-b border-gray-100 last:border-0 transition-colors ${i === 0 ? "bg-blue-50/70" : "hover:bg-gray-50"
+                          }`}
                       >
                         <td className="px-4 py-3 font-bold text-gray-800">{tier.qty}</td>
                         <td className="px-4 py-3 text-center font-semibold text-gray-800">
@@ -358,7 +355,7 @@ export default function ProductPage() {
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">Need Help?</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Call us: 1-800-POLYUS-1</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Call us: +447868176940</p>
                 </div>
               </div>
             </div>
@@ -382,11 +379,10 @@ export default function ProductPage() {
               <button
                 key={id}
                 onClick={() => scrollToSection(id)}
-                className={`px-6 py-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200 ${
-                  activeTab === id
+                className={`px-6 py-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200 ${activeTab === id
                     ? "border-[#1e3a5f] text-[#1e3a5f]"
                     : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 {label}
               </button>
