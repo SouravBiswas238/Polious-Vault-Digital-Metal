@@ -92,16 +92,7 @@ export const sellApi = {
 
 export const accountApi = {
   async transactions() {
-    return delay([
-      {
-        id: "T-10293",
-        date: "2026-04-28",
-        type: "Buy",
-        description: "1 oz PAMP Gold Bar",
-        amount: -2480,
-        status: "Completed",
-      },
-    ]);
+    return request("/auth/transactions");
   },
   async addFunds(amount, method) {
     return delay({
