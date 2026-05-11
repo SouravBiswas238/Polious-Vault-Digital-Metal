@@ -16,9 +16,38 @@ export function CartDrawer() {
     if (!user) {
       closeCart();
       navigate("/login?redirect=checkout");
-    } else {
-      alert("Checkout coming soon!");
+      return;
     }
+
+    const cartLines = items
+      .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
+      .join("\n");
+
+    const orderNote = [
+      "ORDER REQUEST",
+      `User ID: ${user._id}`,
+      `Customer: ${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim(),
+      `Email: ${user.personalInfo?.email || ""}`,
+      "",
+      "Cart Items:",
+      cartLines,
+      "",
+      `Order Total: ${fmt(total)} (${count} item${count !== 1 ? "s" : ""})`,
+    ].join("\n");
+
+    window.ssq = window.ssq || [];
+    window.ssq.push("setCustomer", {
+      user_id: user._id || user.personalInfo?.email,
+      name: `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer",
+      email: user.personalInfo?.email || "",
+      phone: user.personalInfo?.phoneNumber || "",
+      description: orderNote,
+    });
+    window.ssq.push("chatOpen");
+    closeCart();
+
+    // Send order details as a message once the chat panel is open
+    setTimeout(() => window.ssq.push("sendTextMessage", orderNote), 800);
   };
 
   return (

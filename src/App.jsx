@@ -5,6 +5,8 @@ import { CartProvider } from "@/features/cart/context/CartContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
+import { useAuth } from "@/hooks/useAuth";
+import { useSaleSmartly } from "@/hooks/useSaleSmartly";
 
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -30,6 +32,9 @@ import ForgotPassword from "@/pages/ForgotPassword";
 const queryClient = new QueryClient();
 
 function Layout() {
+  const { user } = useAuth();
+  useSaleSmartly(user);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
