@@ -5,6 +5,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertCircle } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+// ── GOLD HISTORICAL CHART (freegoldapi.com) ──────────────────────────────────
+// To remove: delete the next import line and the <GoldHistoricalChart /> block below.
+import { GoldHistoricalChart } from "./GoldHistoricalChart";
+// ─────────────────────────────────────────────────────────────────────────────
 
 const METALS_MAP = {
   Gold: "XAU",
@@ -94,14 +98,18 @@ export function MetalChartsView() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[500px] flex flex-col">
           <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h3 className="font-display text-2xl font-semibold">{activeLabel} (30 Days)</h3>
-              <p className="text-3xl font-mono text-gold mt-2">
-                ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                <span className="text-sm font-sans text-muted-foreground ml-2">Current Ask</span>
-              </p>
-            </div>
-            {data && (
+            {
+              activeMetal !== "XAU" &&
+              <div>
+                <h3 className="font-display text-2xl font-semibold">{activeLabel} (30 Days)</h3>
+                <p className="text-3xl font-mono text-gold mt-2">
+                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="text-sm font-sans text-muted-foreground ml-2">Current Ask</span>
+                </p>
+              </div>
+            }
+
+            {data && activeMetal != "XAU" && (
               <div className="text-sm text-muted-foreground italic">
                 Last updated: {new Date().toLocaleTimeString()}
               </div>
@@ -109,7 +117,14 @@ export function MetalChartsView() {
           </div>
 
           <div className="flex-1 flex items-center justify-center">
-            {isLoading ? (
+            {/* ── GOLD: use freegoldapi.com chart ──────────────────────────────────────
+                 To remove: delete this block and keep only the else branch below.
+                 ──────────────────────────────────────────────────────────────────── */}
+            {activeMetal === "XAU" ? (
+              <div className="w-full">
+                <GoldHistoricalChart />
+              </div>
+            ) : isLoading ? (
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-10 w-10 animate-spin text-gold" />
                 <p className="text-muted-foreground animate-pulse">Fetching market data...</p>

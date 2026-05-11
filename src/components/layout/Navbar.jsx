@@ -83,7 +83,7 @@ export function Navbar() {
             <Link to="/" className="flex items-center gap-2.5">
               <img src={logo} alt="Polyus Vault logo" className="h-9 w-9 rounded-md object-contain" />
               <div className="flex flex-col leading-none">
-                <span className="font-display text-xl font-bold tracking-tight text-gradient-gold">POLYUS</span>
+                <span className="font-display text-xl font-bold tracking-tight text-gradient-gold">POLYUS VAULT</span>
                 <span className="hidden sm:block text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">PRECIOUS METALS</span>
               </div>
             </Link>
