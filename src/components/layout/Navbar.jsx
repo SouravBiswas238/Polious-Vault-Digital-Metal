@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ShoppingBag, Menu, ShoppingCart, Tag, UserCircle2, ChevronDown,
-  Receipt, CreditCard, Wallet, Users, LogIn, UserPlus, LogOut, X,
+  Receipt, Wallet, Users, LogIn, UserPlus, LogOut, X,
   Phone, BarChart2, Shield, Info,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,7 +13,6 @@ import logo from "@/assets/logo.jpeg";
 const accountMenu = [
   { to: "/account/transactions", label: "Transaction Summary", icon: Receipt },
   { to: "/account/profile", label: "My Profile", icon: UserCircle2 },
-  { to: "/account/credit-card", label: "Credit Card", icon: CreditCard },
   { to: "/account/add-funds", label: "How to Add Funds", icon: Wallet },
   { to: "/account/refer", label: "Refer a Friend", icon: Users },
 ];

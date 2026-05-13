@@ -1,13 +1,13 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Receipt, UserCircle2, CreditCard, Wallet, Users, TrendingUp } from "lucide-react";
+import { Receipt, UserCircle2, Wallet, Users, TrendingUp, ShieldCheck } from "lucide-react";
 import { useBalance } from "@/hooks/useBalance";
 import { useAuth } from "@/hooks/useAuth";
 
 const links = [
   { to: "/account/transactions", label: "Transactions", icon: Receipt },
   { to: "/account/profile", label: "My Profile", icon: UserCircle2 },
-  { to: "/account/credit-card", label: "Credit Cards", icon: CreditCard },
   { to: "/account/add-funds", label: "Add Funds", icon: Wallet },
+  { to: "/account/two-factor", label: "Two-Factor Auth", icon: ShieldCheck },
   { to: "/account/refer", label: "Refer a Friend", icon: Users },
 ];
 

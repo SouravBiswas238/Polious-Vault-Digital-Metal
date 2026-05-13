@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Phone, Globe, Briefcase, Calendar, Lock, ShieldCheck, X, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, Globe, Briefcase, Calendar, Lock, ShieldCheck, X, CheckCircle2, Eye, EyeOff, Construction, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Profile() {
@@ -148,7 +149,9 @@ export default function Profile() {
               <button onClick={() => setIsChangingPassword(true)} className="w-full text-left px-3 py-2 rounded-md hover:bg-secondary text-sm transition-colors">
                 Change Password
               </button>
-              <button className="w-full text-left px-3 py-2 rounded-md hover:bg-secondary text-sm transition-colors">Two-Factor Auth</button>
+              <Link to="/account/two-factor" className="block w-full text-left px-3 py-2 rounded-md hover:bg-secondary text-sm transition-colors">
+                Two-Factor Auth
+              </Link>
             </div>
           </section>
         </div>
@@ -190,6 +193,7 @@ export default function Profile() {
             </motion.div>
           </div>
         )}
+
       </AnimatePresence>
     </div>
   );

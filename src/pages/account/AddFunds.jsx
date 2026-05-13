@@ -1,26 +1,60 @@
 import { useState } from "react";
-import { Building2, CreditCard, Wallet, MessageCircle, Loader2 } from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
-const methods = [
-  { id: "wire",   name: "Bank Wire",            desc: "1-2 business days · No fee",  icon: Building2  },
-  { id: "card",   name: "Credit / Debit Card",  desc: "Instant · 2.9% fee",          icon: CreditCard },
-  { id: "crypto", name: "Cryptocurrency",       desc: "1 confirmation · 0.5% fee",   icon: Wallet     },
+const PAYMENT_METHODS = [
+  {
+    id: "card",
+    icon: "https://img.icons8.com/color/96/visa.png",
+    label: "Credit / Debit Card",
+    desc: "Instant · 2.9% processing fee",
+    badge: null,
+  },
+  {
+    id: "google-pay",
+    icon: "https://img.icons8.com/color/96/google-pay.png",
+    label: "Google Pay",
+    desc: "Instant · No fee",
+    badge: null,
+  },
+  {
+    id: "PayPal",
+    icon: "https://img.icons8.com/color/96/paypal.png",
+    label: "PayPal",
+    desc: "Instant · No fee",
+    badge: null,
+  },
+  {
+    id: "eCheck",
+    icon: "https://img.icons8.com/color/96/bank.png",
+    label: "eCheck (ACH)",
+    desc: "2–4 business days · No fee",
+    badge: null,
+  },
+  {
+    id: "wire",
+    icon: "https://img.icons8.com/color/96/globe.png",
+    label: "Bank Wire Transfer",
+    desc: "1–2 business days · No fee",
+    badge: "Most Popular",
+  },
+  {
+    id: "crypto",
+    icon: "https://img.icons8.com/color/96/bitcoin.png",
+    label: "Cryptocurrency",
+    desc: "1 confirmation · 0.5% fee",
+    badge: null,
+  },
 ];
 
-const methodLabel = {
-  wire:   "Bank Wire Transfer",
-  card:   "Credit / Debit Card",
-  crypto: "Cryptocurrency",
-};
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
 export default function AddFunds() {
   const { user } = useAuth();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
 
   const [amount, setAmount] = useState(1000);
   const [method, setMethod] = useState("wire");
@@ -38,10 +72,13 @@ export default function AddFunds() {
     setLoading(true);
 
     const firstName = user.personalInfo?.firstName || "";
-    const lastName  = user.personalInfo?.lastName  || "";
-    const fullName  = `${firstName} ${lastName}`.trim() || "Customer";
-    const email     = user.personalInfo?.email       || "";
-    const phone     = user.personalInfo?.phoneNumber || "";
+    const lastName = user.personalInfo?.lastName || "";
+    const fullName = `${firstName} ${lastName}`.trim() || "Customer";
+    const email = user.personalInfo?.email || "";
+    const phone = user.personalInfo?.phoneNumber || "";
+
+    const selectedMethodObj = PAYMENT_METHODS.find((m) => m.id === method);
+    const methodName = selectedMethodObj ? selectedMethodObj.label : method;
 
     const depositNote = [
       "💰 DEPOSIT REQUEST",
@@ -50,7 +87,7 @@ export default function AddFunds() {
       `User ID  : ${user._id || "N/A"}`,
       `Email    : ${email}`,
       `Amount   : ${fmt(amount)}`,
-      `Method   : ${methodLabel[method]}`,
+      `Method   : ${methodName}`,
       "",
       "Please assist me in completing my deposit.",
     ].join("\n");
@@ -58,8 +95,8 @@ export default function AddFunds() {
     // Identify the user in SaleSmartly
     window.ssq = window.ssq || [];
     window.ssq.push("setCustomer", {
-      user_id:     user._id || email,
-      name:        fullName,
+      user_id: user._id || email,
+      name: fullName,
       email,
       phone,
       description: depositNote,
@@ -105,13 +142,11 @@ export default function AddFunds() {
           <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Deposit Method
           </span>
-          {methods.map((m) => (
+          {PAYMENT_METHODS.map((m) => (
             <label
               key={m.id}
               className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
-                method === m.id
-                  ? "border-gold bg-gold/5"
-                  : "border-border hover:border-gold/40"
+                method === m.id ? "border-gold bg-gold/5" : "border-border hover:border-gold/40"
               }`}
             >
               <input
@@ -121,9 +156,11 @@ export default function AddFunds() {
                 onChange={() => setMethod(m.id)}
                 className="accent-[var(--gold)]"
               />
-              <m.icon className="h-5 w-5 text-gold" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-secondary/30">
+                <img src={m.icon} alt={m.label} className="h-6 w-6 object-contain" />
+              </div>
               <div className="flex-1">
-                <div className="text-sm font-semibold">{m.name}</div>
+                <div className="text-sm font-semibold">{m.label}</div>
                 <div className="text-xs text-muted-foreground">{m.desc}</div>
               </div>
             </label>

@@ -18,9 +18,9 @@ import ProductPage from "@/pages/ProductPage";
 import Account from "@/pages/account/Account";
 import Transactions from "@/pages/account/Transactions";
 import Profile from "@/pages/account/Profile";
-import CreditCard from "@/pages/account/CreditCard";
 import AddFunds from "@/pages/account/AddFunds";
 import Refer from "@/pages/account/Refer";
+import TwoFactorAuth from "@/pages/account/TwoFactorAuth";
 import Admin from "@/pages/Admin";
 import SkeletonDemo from "@/pages/SkeletonDemo";
 import ResetPassword from "@/pages/ResetPassword";
@@ -114,9 +114,10 @@ export default function App() {
                   <Route index element={<Navigate to="transactions" replace />} />
                   <Route path="transactions" element={<Transactions />} />
                   <Route path="profile" element={<Profile />} />
-                  <Route path="credit-card" element={<CreditCard />} />
+
                   <Route path="add-funds" element={<AddFunds />} />
                   <Route path="refer" element={<Refer />} />
+                  <Route path="two-factor" element={<TwoFactorAuth />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />

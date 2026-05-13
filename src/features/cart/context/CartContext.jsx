@@ -33,6 +33,7 @@ export function CartProvider({ children }) {
       addItem,
       removeItem,
       updateQty,
+      clearCart: () => setItems([]),
     }),
     [items, isOpen],
   );
