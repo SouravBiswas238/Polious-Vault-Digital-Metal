@@ -25,6 +25,13 @@ import Admin from "@/pages/Admin";
 import SkeletonDemo from "@/pages/SkeletonDemo";
 import ResetPassword from "@/pages/ResetPassword";
 import ForgotPassword from "@/pages/ForgotPassword";
+import AboutUsPage from "@/pages/AboutUs";
+import VaultStorage from "@/pages/VaultStorage";
+import ComplianceKYC from "@/pages/ComplianceKYC";
+import ContactUs from "@/pages/ContactUs";
+import TermsOfService from "@/pages/TermsOfService";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import CookiePolicy from "@/pages/CookiePolicy";
 
 
 
@@ -95,6 +102,13 @@ export default function App() {
               <Route path="/skeleton-demo" element={<SkeletonDemo />} />
               <Route path="/resetpassword/:token" element={<ResetPassword />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/about" element={<AboutUsPage />} />
+              <Route path="/vault-storage" element={<VaultStorage />} />
+              <Route path="/compliance" element={<ComplianceKYC />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/account" element={<Account />}>
                   <Route index element={<Navigate to="transactions" replace />} />

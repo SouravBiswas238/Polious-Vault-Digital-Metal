@@ -3,11 +3,11 @@ import { Shield, Award, Lock, Phone, Mail, MapPin } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 const shopLinks = [
-  { label: "Gold Bullion", to: "/#shop" },
-  { label: "Silver Bullion", to: "/#shop" },
-  { label: "Platinum", to: "/#shop" },
-  { label: "Palladium", to: "/#shop" },
-  { label: "Rhodium", to: "/#shop" },
+  { label: "Gold Bullion", to: "/shop/gold" },
+  { label: "Silver Bullion", to: "/shop/silver" },
+  { label: "Platinum", to: "/shop/platinum" },
+  { label: "Palladium", to: "/shop/palladium" },
+  { label: "Rhodium", to: "/shop/rhodium" },
 ];
 
 const accountLinks = [
@@ -19,11 +19,11 @@ const accountLinks = [
 ];
 
 const companyLinks = [
-  { label: "About Us", to: "#" },
-  { label: "Vault Storage", to: "#" },
-  { label: "Compliance & KYC", to: "#" },
+  { label: "About Us", to: "/about" },
+  { label: "Vault Storage", to: "/vault-storage" },
+  { label: "Compliance & KYC", to: "/compliance" },
   { label: "Live Charts", to: "/live-charts" },
-  { label: "Contact Us", to: "#" },
+  { label: "Contact Us", to: "/contact" },
 ];
 
 const trustBadges = [
@@ -34,9 +34,9 @@ const trustBadges = [
 
 export function Footer() {
   return (
-    <footer className="bg-[oklch(0.13_0.04_255)] text-white/70">
+    <footer className=" bg-[oklch(0.17_0.04_255)] text-white/70">
       {/* Trust bar */}
-      <div className="border-b border-white/8">
+      <div className="border-b border-white/8 bg-[oklch(0.13_0.04_255)]">
         <div className="mx-auto max-w-7xl px-6 lg:px-12 py-8">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {trustBadges.map((b) => (
@@ -67,12 +67,12 @@ export function Footer() {
               </div>
             </Link>
             <p className="mt-5 max-w-xs text-sm text-white/45 leading-relaxed">
-              A trusted dealer of investment-grade precious metals with insured vaulted storage in Zurich, Singapore, and Toronto.
+              A trusted dealer of investment-grade precious metals with insured vaulted storage in Zurich, London, Singapore, and Toronto.
             </p>
             <div className="mt-6 space-y-2 text-xs text-white/40">
               <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-gold/50" /> +447868176940</div>
               <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-gold/50" /> support@polyusvault.com</div>
-              <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gold/50" /> Zurich · Singapore · Toronto</div>
+              <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gold/50" /> Zurich, London, Singapore, and Toronto.</div>
             </div>
           </div>
 
@@ -106,9 +106,9 @@ export function Footer() {
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
           <p>© {new Date().getFullYear()} Polyus Vault. All rights reserved. All prices in USD.</p>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-white/60 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white/60 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white/60 transition-colors">Cookie Policy</a>
+            <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white/60 transition-colors">Terms of Service</Link>
+            <Link to="/cookies" className="hover:text-white/60 transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>

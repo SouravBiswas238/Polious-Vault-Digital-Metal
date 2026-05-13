@@ -2,6 +2,7 @@ import { HeroSlider } from "@/features/home/components/HeroSlider";
 import { LivePriceTicker } from "@/features/home/components/LivePriceTicker";
 import { CategoryCards } from "@/features/products/components/CategoryCards";
 import { BestsellerCarousel } from "@/features/products/components/BestsellerCarousel";
+import { AboutUs } from "@/features/home/components/AboutUs";
 
 export default function Index() {
   return (
@@ -10,6 +11,7 @@ export default function Index() {
       <LivePriceTicker />
       <CategoryCards />
       <BestsellerCarousel />
+      <AboutUs compact={true} />
     </>
   );
 }
