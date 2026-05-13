@@ -1,182 +1,296 @@
 import { useState, useMemo } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
-// ── GOLD HISTORICAL CHART (freegoldapi.com) ──────────────────────────────────
-// To remove: delete the next import line and the <GoldHistoricalChart /> block below.
-import { GoldHistoricalChart } from "./GoldHistoricalChart";
-// ─────────────────────────────────────────────────────────────────────────────
 
-const METALS_MAP = {
-  Gold: "XAU",
-  Silver: "XAG",
-  Platinum: "XPT",
-  Palladium: "XPD",
-  Rhodium: "XRH",
-};
+// ─── Metal definitions ────────────────────────────────────────────────────────
+const METALS = [
+  { id: "gold",      label: "Gold",      series: "GOLDAMGBD228NLBM", unit: "USD / troy oz",   color: "#d4af37" },
+  { id: "silver",    label: "Silver",    series: "SLVPRUSD",         unit: "USD / troy oz",   color: "#94a3b8" },
+  { id: "platinum",  label: "Platinum",  series: "PLAT",             unit: "USD / troy oz",   color: "#8db4c8" },
+  { id: "palladium", label: "Palladium", series: "PALLFNFINDEXM",    unit: "USD / troy oz",   color: "#a8c0b5" },
+  { id: "copper",    label: "Copper",    series: "PCOPP_USD",        unit: "USD / lb",        color: "#c87941" },
+];
 
-const METALS = Object.entries(METALS_MAP);
+// ─── Timeframes ───────────────────────────────────────────────────────────────
+const TIMEFRAMES = [
+  { label: "1M",  value: "1M" },
+  { label: "6M",  value: "6M" },
+  { label: "1Y",  value: "1Y" },
+  { label: "5Y",  value: "5Y" },
+  { label: "MAX", value: "MAX" },
+];
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function formatXLabel(dateStr, timeframe) {
+  const d = new Date(dateStr);
+  if (timeframe === "MAX" || timeframe === "5Y") return d.getFullYear().toString();
+  if (timeframe === "1M")
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+function fmtPrice(value, digits = 2) {
+  return value?.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }) ?? "—";
+}
+
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+function MetalTooltip({ active, payload, label, color, unit }) {
+  if (!active || !payload?.length) return null;
+  const price = payload[0]?.value;
+  return (
+    <div style={{
+      background: "rgba(10,8,5,0.92)",
+      border: `1px solid ${color}55`,
+      borderRadius: 10,
+      padding: "10px 14px",
+      backdropFilter: "blur(8px)",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+    }}>
+      <p style={{ fontSize: "0.7rem", color: "#888", margin: "0 0 4px" }}>{label}</p>
+      <p style={{ fontSize: "1rem", fontWeight: 700, color, fontFamily: "monospace", margin: "0 0 2px" }}>
+        ${fmtPrice(price)}
+        <span style={{ fontSize: "0.65rem", color: "#888", marginLeft: 4 }}>{unit}</span>
+      </p>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export function MetalChartsView() {
-  const [activeMetal, setActiveMetal] = useState("XAU");
+  const [activeMetalId, setActiveMetalId] = useState("gold");
+  const [activeTimeframe, setActiveTimeframe] = useState("1Y");
+
+  const metal = METALS.find((m) => m.id === activeMetalId);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["metalHistory", activeMetal],
+    queryKey: ["fredHistory", metal.series, activeTimeframe],
     queryFn: async () => {
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
-      const response = await fetch(
-        `${API_BASE_URL}/metals/historical/?start_date=${startDate}&end_date=${endDate}&currencies=${activeMetal}`
+      const res = await fetch(
+        `${API_BASE_URL}/metals/fred-history?series=${metal.series}&timeframe=${activeTimeframe}`
       );
-      if (!response.ok) throw new Error("Failed to fetch market data");
-      return response.json();
+      if (!res.ok) throw new Error("Failed to fetch historical data");
+      return res.json();
     },
-    staleTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 30, // 30 min cache
+    retry: 2,
   });
-  console.log(data);
-  const chartConfig = {
-    price: {
-      label: "Price (USD)",
-      color: "var(--gold)",
-    },
-  };
 
-  const activeData = useMemo(() => {
-    if (!data?.data) return [];
-    return data.data.map((item) => {
-      const d = new Date(item.date);
-      return {
-        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        price: item.price,
-        rawDate: item.date,
-      };
-    });
-  }, [data]);
+  // Build chart data
+  const chartData = useMemo(() => {
+    if (!data?.data?.length) return [];
 
-  const activeLabel = useMemo(() => {
-    return METALS.find(([_, value]) => value === activeMetal)?.[0] || activeMetal;
-  }, [activeMetal]);
+    let points = [...data.data];
 
-  const { yDomain, currentPrice } = useMemo(() => {
-    if (activeData.length === 0) return { yDomain: [0, 100], currentPrice: 0 };
-    const prices = activeData.map((d) => d.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const padding = (maxPrice - minPrice) * 0.1 || minPrice * 0.05;
+    // For large datasets, sample to ≤ 400 points for performance
+    if (points.length > 400) {
+      const step = Math.ceil(points.length / 400);
+      points = points.filter((_, i) => i % step === 0 || i === points.length - 1);
+    }
+
+    return points.map((d) => ({
+      dateStr: d.date,
+      label: formatXLabel(d.date, activeTimeframe),
+      price: d.price,
+    }));
+  }, [data, activeTimeframe]);
+
+  // Stats
+  const stats = useMemo(() => {
+    if (chartData.length < 2) return null;
+    const prices = chartData.map((d) => d.price);
+    const first = prices[0];
+    const last = prices[prices.length - 1];
+    const diff = last - first;
+    const pct = (diff / first) * 100;
     return {
-      yDomain: [minPrice - padding, maxPrice + padding],
-      currentPrice: prices[prices.length - 1],
+      current: last,
+      change: diff,
+      pct,
+      isPositive: diff >= 0,
+      low: Math.min(...prices),
+      high: Math.max(...prices),
     };
-  }, [activeData]);
+  }, [chartData]);
+
+  const yDomain = useMemo(() => {
+    if (!stats) return [0, 100];
+    const pad = (stats.high - stats.low) * 0.08 || stats.low * 0.05;
+    return [stats.low - pad, stats.high + pad];
+  }, [stats]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 lg:px-12">
+      {/* Section Header */}
       <div className="mb-10 text-center">
         <h2 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
           Live Market Charts
         </h2>
-        <p className="text-muted-foreground mt-4">Real-time performance data from global markets</p>
+        <p className="mt-4 text-muted-foreground">
+          Historical price data sourced from FRED · St. Louis Fed
+        </p>
       </div>
 
-      <Tabs value={activeMetal} onValueChange={setActiveMetal} className="w-full">
-        <TabsList className="mb-8 grid w-full grid-cols-3 md:grid-cols-5 h-auto p-1 bg-secondary/50">
-          {METALS.map(([label, value]) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="py-2.5 text-sm md:text-base data-[state=active]:bg-background data-[state=active]:text-gold data-[state=active]:shadow-sm"
+      {/* Metal Tabs */}
+      <div className="mb-4 flex flex-wrap gap-1.5 rounded-xl border border-border bg-secondary/30 p-1">
+        {METALS.map((m) => {
+          const isActive = m.id === activeMetalId;
+          return (
+            <button
+              key={m.id}
+              onClick={() => setActiveMetalId(m.id)}
+              style={isActive ? { borderColor: `${m.color}60`, color: m.color, background: `${m.color}12` } : {}}
+              className={`flex-1 min-w-[80px] rounded-lg py-2.5 text-sm font-semibold transition-all border ${
+                isActive
+                  ? "shadow-sm"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              }`}
             >
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[500px] flex flex-col">
-          <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            {
-              activeMetal !== "XAU" &&
-              <div>
-                <h3 className="font-display text-2xl font-semibold">{activeLabel} (30 Days)</h3>
-                <p className="text-3xl font-mono text-gold mt-2">
-                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  <span className="text-sm font-sans text-muted-foreground ml-2">Current Ask</span>
+      {/* Chart Card */}
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[520px] flex flex-col">
+
+        {/* Header: Price + Timeframe */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            {stats ? (
+              <>
+                <p style={{ color: "#888", fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, margin: "0 0 4px" }}>
+                  {metal.label} · {metal.unit}
                 </p>
-              </div>
-            }
-
-            {data && activeMetal != "XAU" && (
-              <div className="text-sm text-muted-foreground italic">
-                Last updated: {new Date().toLocaleTimeString()}
-              </div>
-            )}
+                <p style={{ fontSize: "2rem", fontWeight: 700, fontFamily: "monospace", color: metal.color, lineHeight: 1, margin: 0 }}>
+                  <span style={{ fontSize: "1.1rem" }}>$</span>
+                  {fmtPrice(stats.current)}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontSize: "0.875rem", fontWeight: 600, color: stats.isPositive ? "#22c55e" : "#ef4444" }}>
+                  {stats.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  <span>
+                    {stats.isPositive ? "+" : ""}{fmtPrice(stats.change)} ({stats.isPositive ? "+" : ""}{stats.pct.toFixed(2)}%) · {activeTimeframe}
+                  </span>
+                </div>
+              </>
+            ) : !isLoading && !isError ? (
+              <p className="text-muted-foreground text-sm">Awaiting data…</p>
+            ) : null}
           </div>
 
-          <div className="flex-1 flex items-center justify-center">
-            {/* ── GOLD: use freegoldapi.com chart ──────────────────────────────────────
-                 To remove: delete this block and keep only the else branch below.
-                 ──────────────────────────────────────────────────────────────────── */}
-            {activeMetal === "XAU" ? (
-              <div className="w-full">
-                <GoldHistoricalChart />
+          {/* Stats Pills */}
+          {stats && (
+            <div className="flex flex-wrap gap-2 items-center">
+              {[
+                { label: "Period Low",  value: `$${fmtPrice(stats.low)}`  },
+                { label: "Period High", value: `$${fmtPrice(stats.high)}` },
+                { label: "Data Points", value: chartData.length           },
+              ].map((pill) => (
+                <div key={pill.label} className="rounded-xl bg-secondary/50 border border-border/50 px-3 py-1.5 text-center">
+                  <span className="block text-[0.65rem] uppercase tracking-widest text-muted-foreground mb-0.5">{pill.label}</span>
+                  <span className="block text-sm font-semibold font-mono">{pill.value}</span>
+                </div>
+              ))}
+              <div className="text-xs text-muted-foreground italic">
+                Updated: {new Date().toLocaleDateString()}
               </div>
-            ) : isLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-10 w-10 animate-spin text-gold" />
-                <p className="text-muted-foreground animate-pulse">Fetching market data...</p>
-              </div>
-            ) : isError ? (
-              <div className="flex flex-col items-center gap-3 text-destructive max-w-md text-center">
-                <AlertCircle className="h-10 w-10" />
-                <p className="font-medium">Connection Error</p>
-                <p className="text-sm opacity-80">{error?.message || "Could not connect to the live price server."}</p>
-              </div>
-            ) : activeData.length > 0 ? (
-              <ChartContainer config={chartConfig} className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={activeData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="fillPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-price)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="var(--color-price)" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.5} />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={12} minTickGap={30} />
-                    <YAxis
-                      domain={yDomain}
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      width={80}
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                    />
-                    <ChartTooltip
-                      cursor={{ stroke: "var(--color-price)", strokeWidth: 1, strokeDasharray: "4 4" }}
-                      content={<ChartTooltipContent indicator="line" />}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="price"
-                      stroke="var(--color-price)"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#fillPrice)"
-                      animationDuration={1500}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <div className="text-muted-foreground">No historical data available for this metal.</div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </Tabs>
+
+        {/* Timeframe Selector */}
+        <div className="mb-5 flex gap-1 rounded-xl border border-border/50 bg-secondary/20 p-1 w-fit">
+          {TIMEFRAMES.map((tf) => {
+            const isActive = tf.value === activeTimeframe;
+            return (
+              <button
+                key={tf.value}
+                onClick={() => setActiveTimeframe(tf.value)}
+                style={isActive ? { background: metal.color, color: "#111" } : {}}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all ${
+                  isActive ? "" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                }`}
+              >
+                {tf.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Chart Body */}
+        <div className="flex-1 flex items-center justify-center min-h-[360px]">
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-10 w-10 animate-spin" style={{ color: metal.color }} />
+              <p className="text-muted-foreground animate-pulse text-sm">Loading {metal.label} history…</p>
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center gap-3 text-destructive text-center max-w-sm">
+              <AlertCircle className="h-10 w-10" />
+              <p className="font-semibold">Failed to load data</p>
+              <p className="text-sm opacity-80">{error?.message || "Could not reach the price server."}</p>
+            </div>
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={360}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id={`metalGradient-${activeMetalId}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={metal.color} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={metal.color} stopOpacity={0.0}  />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  minTickGap={40}
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }}
+                />
+                <YAxis
+                  domain={yDomain}
+                  tickFormatter={(v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(2)}`}
+                  width={74}
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={6}
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }}
+                />
+                <Tooltip
+                  content={<MetalTooltip color={metal.color} unit={metal.unit} />}
+                  cursor={{ stroke: metal.color, strokeWidth: 1, strokeDasharray: "4 4" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke={metal.color}
+                  strokeWidth={2}
+                  fill={`url(#metalGradient-${activeMetalId})`}
+                  dot={false}
+                  activeDot={{ r: 4, fill: metal.color, stroke: "#fff", strokeWidth: 1.5 }}
+                  animationDuration={700}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted-foreground text-sm">No data available for this time range.</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <p className="mt-4 text-right text-[0.65rem] text-muted-foreground opacity-60">
+          Source: FRED · Federal Reserve Bank of St. Louis · Series: {metal.series}
+        </p>
+      </div>
     </div>
   );
 }
