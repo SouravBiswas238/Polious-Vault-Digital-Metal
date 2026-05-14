@@ -41,7 +41,7 @@ const TABS = [
 
 export default function ProductPage() {
   const { id } = useParams();
-  const { addItem } = useCart();
+  const { addBuyItem } = useCart();
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
@@ -120,7 +120,7 @@ export default function ProductPage() {
   const metalKey = product.metal.toLowerCase();
 
   const handleAdd = () => {
-    for (let i = 0; i < qty; i++) addItem({ ...product, id: product._id });
+    for (let i = 0; i < qty; i++) addBuyItem({ ...product, id: product._id });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };

@@ -13,7 +13,7 @@ const fmt = (n) =>
   }).format(n);
 
 function ProductCard({ p, index }) {
-  const { addItem } = useCart();
+  const { addBuyItem } = useCart();
   const [added, setAdded] = useState(false);
   const [qty, setQty] = useState(1);
   const [hovered, setHovered] = useState(false);
@@ -40,7 +40,7 @@ function ProductCard({ p, index }) {
 
   const handleAdd = () => {
     if (!p.inStock) return;
-    for (let i = 0; i < qty; i++) addItem({ ...p, id: p._id || p.id, price: activeTier?.wireCheck ?? p.price });
+    for (let i = 0; i < qty; i++) addBuyItem({ ...p, id: p._id || p.id, price: activeTier?.wireCheck ?? p.price });
     setAdded(true);
     setTimeout(() => {
       setAdded(false);

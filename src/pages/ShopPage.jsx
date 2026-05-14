@@ -39,14 +39,14 @@ function GreatDealBadge() {
 }
 
 function ProductCard({ p }) {
-  const { addItem } = useCart();
+  const { addBuyItem } = useCart();
   const [qty, setQty] = useState(1);
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
 
   const handleAdd = (e) => {
     e.preventDefault();
-    for (let i = 0; i < qty; i++) addItem({ ...p, id: p._id || p.id });
+    for (let i = 0; i < qty; i++) addBuyItem({ ...p, id: p._id || p.id });
     setAdded(true);
     setTimeout(() => { setAdded(false); setQty(1); }, 1800);
   };

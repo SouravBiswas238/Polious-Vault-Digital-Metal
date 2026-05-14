@@ -25,7 +25,8 @@ const navLinks = [
 ];
 
 export function Navbar() {
-  const { count, openCart } = useCart();
+  const { buyCount, sellCount, openCart } = useCart();
+  const count = buyCount + sellCount;
   const { user, logout } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
