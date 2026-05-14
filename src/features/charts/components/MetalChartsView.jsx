@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, Weight } from "lucide-react";
+import { metalsApi } from "@/lib/api";
 
 // ─── Metal definitions ────────────────────────────────────────────────────────
 const METALS = [
@@ -86,10 +87,7 @@ export function MetalChartsView() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["metalChart", activeMetalId, activeTimeframe, activeWeightUnit],
     queryFn: async () => {
-      const url = `https://api.goldavenue.com/api/v1/live_chart?metal_iso=${activeMetalId}&currency_iso=USD&period=${activeTimeframe}&weight_unit=${activeWeightUnit}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch live market data");
-      return res.json();
+      return metalsApi.proxy(activeMetalId, activeTimeframe, activeWeightUnit);
     },
     staleTime: 1000 * 60 * 5, // 5 min cache
     retry: 2,

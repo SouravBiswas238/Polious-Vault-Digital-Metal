@@ -2,6 +2,7 @@ import { TrendingUp, TrendingDown, Minus, BarChart2, Loader2 } from "lucide-reac
 import { Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metalsApi } from "@/lib/api";
 
 const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
@@ -22,12 +23,9 @@ const fmt = (n) =>
       }).format(n)
     : "—";
 
-// Fetches live data for one metal from Gold Avenue
+// Fetches live data for one metal from our backend proxy
 const fetchMetal = async (symbol) => {
-  const url = `https://api.goldavenue.com/api/v1/live_chart?metal_iso=${symbol}&currency_iso=USD&period=1d&weight_unit=ounce`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch ${symbol}: HTTP ${res.status}`);
-  const json = await res.json();
+  const json = await metalsApi.proxy(symbol);
 
   const price = json.spot_price?.ask ?? null;
   const changeSign = json.price_changes?.change_sign;

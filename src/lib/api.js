@@ -12,7 +12,7 @@ async function request(path, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(options.customUrl || `${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });
@@ -153,5 +153,21 @@ export const adminApi = {
       method: "DELETE",
       headers: { "x-admin-key": ADMIN_KEY },
     });
+  },
+};
+
+export const metalsApi = {
+  async getLatest() {
+    const baseUrl = API_BASE_URL.replace("https://", "http://");
+    return request("/metals/latest", { customUrl: `${baseUrl}/metals/latest` });
+  },
+  async proxy(symbol, period = "1d", weight_unit = "ounce") {
+    // Force http for all metals API calls as requested
+    const baseUrl = API_BASE_URL.replace("https://", "http://");
+    const url = `${baseUrl}/metals/proxy?symbol=${symbol}&period=${period}&weight_unit=${weight_unit}`;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch metal data");
+    return response.json();
   },
 };
