@@ -4,41 +4,53 @@ import {
   Tooltip, ResponsiveContainer,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
+import { Loader2, AlertCircle, TrendingUp, TrendingDown, Weight } from "lucide-react";
 
 // ─── Metal definitions ────────────────────────────────────────────────────────
 const METALS = [
-  { id: "gold",      label: "Gold",      series: "GOLDAMGBD228NLBM", unit: "USD / troy oz",   color: "#d4af37" },
-  { id: "silver",    label: "Silver",    series: "SLVPRUSD",         unit: "USD / troy oz",   color: "#94a3b8" },
-  { id: "platinum",  label: "Platinum",  series: "PLAT",             unit: "USD / troy oz",   color: "#8db4c8" },
-  { id: "palladium", label: "Palladium", series: "PALLFNFINDEXM",    unit: "USD / troy oz",   color: "#a8c0b5" },
-  { id: "copper",    label: "Copper",    series: "PCOPP_USD",        unit: "USD / lb",        color: "#c87941" },
+  { id: "XAU", label: "Gold", color: "#d4af37" },
+  { id: "XAG", label: "Silver", color: "#94a3b8" },
+  { id: "XPT", label: "Platinum", color: "#8db4c8" },
+  { id: "XPD", label: "Palladium", color: "#a8c0b5" },
 ];
 
 // ─── Timeframes ───────────────────────────────────────────────────────────────
 const TIMEFRAMES = [
-  { label: "1M",  value: "1M" },
-  { label: "6M",  value: "6M" },
-  { label: "1Y",  value: "1Y" },
-  { label: "5Y",  value: "5Y" },
-  { label: "MAX", value: "MAX" },
+  { label: "1d", value: "1d" },
+  { label: "1w", value: "1w" },
+  { label: "1m", value: "1m" },
+  { label: "3m", value: "3m" },
+  { label: "6m", value: "6m" },
+  { label: "1y", value: "1y" },
+  { label: "5y", value: "5y" },
+  { label: "10y", value: "10y" },
+  { label: "All", value: "all" },
+];
+
+// ─── Weight Units ─────────────────────────────────────────────────────────────
+const WEIGHT_UNITS = [
+  { label: "Ounce", value: "ounce" },
+  { label: "Gram", value: "gram" },
+  { label: "KG", value: "kg" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatXLabel(dateStr, timeframe) {
   const d = new Date(dateStr);
-  if (timeframe === "MAX" || timeframe === "5Y") return d.getFullYear().toString();
-  if (timeframe === "1M")
+  if (timeframe === "all" || timeframe === "10y" || timeframe === "5y") return d.getFullYear().toString();
+  if (timeframe === "1d")
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  if (timeframe === "1w" || timeframe === "1m")
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 
 function fmtPrice(value, digits = 2) {
-  return value?.toLocaleString(undefined, {
+  if (value === undefined || value === null) return "—";
+  return value.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  }) ?? "—";
+  });
 }
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
@@ -57,7 +69,7 @@ function MetalTooltip({ active, payload, label, color, unit }) {
       <p style={{ fontSize: "0.7rem", color: "#888", margin: "0 0 4px" }}>{label}</p>
       <p style={{ fontSize: "1rem", fontWeight: 700, color, fontFamily: "monospace", margin: "0 0 2px" }}>
         ${fmtPrice(price)}
-        <span style={{ fontSize: "0.65rem", color: "#888", marginLeft: 4 }}>{unit}</span>
+        <span style={{ fontSize: "0.65rem", color: "#888", marginLeft: 4 }}>USD / {unit}</span>
       </p>
     </div>
   );
@@ -65,33 +77,33 @@ function MetalTooltip({ active, payload, label, color, unit }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function MetalChartsView() {
-  const [activeMetalId, setActiveMetalId] = useState("gold");
-  const [activeTimeframe, setActiveTimeframe] = useState("1Y");
+  const [activeMetalId, setActiveMetalId] = useState("XAU");
+  const [activeTimeframe, setActiveTimeframe] = useState("1y");
+  const [activeWeightUnit, setActiveWeightUnit] = useState("ounce");
 
   const metal = METALS.find((m) => m.id === activeMetalId);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["fredHistory", metal.series, activeTimeframe],
+    queryKey: ["metalChart", activeMetalId, activeTimeframe, activeWeightUnit],
     queryFn: async () => {
-      const res = await fetch(
-        `${API_BASE_URL}/metals/fred-history?series=${metal.series}&timeframe=${activeTimeframe}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch historical data");
+      const url = `https://api.goldavenue.com/api/v1/live_chart?metal_iso=${activeMetalId}&currency_iso=USD&period=${activeTimeframe}&weight_unit=${activeWeightUnit}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch live market data");
       return res.json();
     },
-    staleTime: 1000 * 60 * 30, // 30 min cache
+    staleTime: 1000 * 60 * 5, // 5 min cache
     retry: 2,
   });
 
   // Build chart data
   const chartData = useMemo(() => {
-    if (!data?.data?.length) return [];
+    if (!data?.prices_list?.length) return [];
 
-    let points = [...data.data];
+    let points = [...data.prices_list];
 
-    // For large datasets, sample to ≤ 400 points for performance
-    if (points.length > 400) {
-      const step = Math.ceil(points.length / 400);
+    // Sample if too many points
+    if (points.length > 500) {
+      const step = Math.ceil(points.length / 500);
       points = points.filter((_, i) => i % step === 0 || i === points.length - 1);
     }
 
@@ -104,26 +116,28 @@ export function MetalChartsView() {
 
   // Stats
   const stats = useMemo(() => {
-    if (chartData.length < 2) return null;
-    const prices = chartData.map((d) => d.price);
-    const first = prices[0];
-    const last = prices[prices.length - 1];
-    const diff = last - first;
-    const pct = (diff / first) * 100;
+    if (!data || !chartData.length) return null;
+    
+    const changes = data.price_changes;
+    const isPositive = changes?.change_sign !== "-";
+    
+    const prices = chartData.map(d => d.price);
+    
     return {
-      current: last,
-      change: diff,
-      pct,
-      isPositive: diff >= 0,
+      current: data.spot_price?.ask || prices[prices.length - 1],
+      change: changes?.difference || 0,
+      pct: changes?.percentage?.number || 0,
+      isPositive,
       low: Math.min(...prices),
       high: Math.max(...prices),
+      unit: activeWeightUnit
     };
-  }, [chartData]);
+  }, [data, chartData, activeWeightUnit]);
 
   const yDomain = useMemo(() => {
     if (!stats) return [0, 100];
-    const pad = (stats.high - stats.low) * 0.08 || stats.low * 0.05;
-    return [stats.low - pad, stats.high + pad];
+    const pad = (stats.high - stats.low) * 0.1 || stats.low * 0.02;
+    return [Math.max(0, stats.low - pad), stats.high + pad];
   }, [stats]);
 
   return (
@@ -134,24 +148,24 @@ export function MetalChartsView() {
           Live Market Charts
         </h2>
         <p className="mt-4 text-muted-foreground">
-          Historical price data sourced from FRED · St. Louis Fed
+          Real-time price data sourced from Global Markets · Gold Avenue
         </p>
       </div>
 
       {/* Metal Tabs */}
-      <div className="mb-4 flex flex-wrap gap-1.5 rounded-xl border border-border bg-secondary/30 p-1">
+      <div className="mb-6 flex flex-wrap gap-1.5 rounded-xl border border-border bg-secondary/30 p-1">
         {METALS.map((m) => {
           const isActive = m.id === activeMetalId;
           return (
             <button
               key={m.id}
+              id={`tab-${m.id.toLowerCase()}`}
               onClick={() => setActiveMetalId(m.id)}
               style={isActive ? { borderColor: `${m.color}60`, color: m.color, background: `${m.color}12` } : {}}
-              className={`flex-1 min-w-[80px] rounded-lg py-2.5 text-sm font-semibold transition-all border ${
-                isActive
-                  ? "shadow-sm"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-              }`}
+              className={`flex-1 min-w-[80px] rounded-lg py-2.5 text-sm font-semibold transition-all border ${isActive
+                ? "shadow-sm"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                }`}
             >
               {m.label}
             </button>
@@ -160,25 +174,28 @@ export function MetalChartsView() {
       </div>
 
       {/* Chart Card */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[520px] flex flex-col">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8 min-h-[580px] flex flex-col">
 
-        {/* Header: Price + Timeframe */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
+        {/* Header: Price + Controls */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div className="flex-1">
             {stats ? (
               <>
-                <p style={{ color: "#888", fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, margin: "0 0 4px" }}>
-                  {metal.label} · {metal.unit}
-                </p>
-                <p style={{ fontSize: "2rem", fontWeight: 700, fontFamily: "monospace", color: metal.color, lineHeight: 1, margin: 0 }}>
-                  <span style={{ fontSize: "1.1rem" }}>$</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <p style={{ color: "#888", fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>
+                    {metal.label} Spot Price · USD / {stats.unit}
+                  </p>
+                </div>
+                <p style={{ fontSize: "2.5rem", fontWeight: 700, fontFamily: "monospace", color: metal.color, lineHeight: 1, margin: 0 }}>
+                  <span style={{ fontSize: "1.2rem", verticalAlign: "super", marginRight: 2 }}>$</span>
                   {fmtPrice(stats.current)}
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontSize: "0.875rem", fontWeight: 600, color: stats.isPositive ? "#22c55e" : "#ef4444" }}>
-                  {stats.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: "0.95rem", fontWeight: 600, color: stats.isPositive ? "#22c55e" : "#ef4444" }}>
+                  {stats.isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                   <span>
-                    {stats.isPositive ? "+" : ""}{fmtPrice(stats.change)} ({stats.isPositive ? "+" : ""}{stats.pct.toFixed(2)}%) · {activeTimeframe}
+                    {stats.isPositive ? "+" : ""}{fmtPrice(stats.change)} ({stats.pct.toFixed(2)}%)
                   </span>
+                  <span className="text-muted-foreground font-normal text-sm ml-1">past {activeTimeframe}</span>
                 </div>
               </>
             ) : !isLoading && !isError ? (
@@ -186,111 +203,142 @@ export function MetalChartsView() {
             ) : null}
           </div>
 
-          {/* Stats Pills */}
-          {stats && (
-            <div className="flex flex-wrap gap-2 items-center">
-              {[
-                { label: "Period Low",  value: `$${fmtPrice(stats.low)}`  },
+          {/* Right side controls */}
+          <div className="flex flex-col gap-4 items-end">
+            {/* Weight Selector */}
+            <div className="flex items-center gap-2 p-1 bg-secondary/20 rounded-xl border border-border/50">
+              <div className="pl-2 pr-1 text-muted-foreground">
+                <Weight size={14} />
+              </div>
+              {WEIGHT_UNITS.map((u) => {
+                const isActive = u.value === activeWeightUnit;
+                return (
+                  <button
+                    key={u.value}
+                    id={`weight-${u.value}`}
+                    onClick={() => setActiveWeightUnit(u.value)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${isActive 
+                      ? "bg-foreground text-background shadow-md" 
+                      : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {u.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Timeframe Selector */}
+            <div className="flex flex-wrap gap-1 rounded-xl border border-border/50 bg-secondary/20 p-1">
+              {TIMEFRAMES.map((tf) => {
+                const isActive = tf.value === activeTimeframe;
+                return (
+                  <button
+                    key={tf.value}
+                    id={`period-${tf.value}`}
+                    onClick={() => setActiveTimeframe(tf.value)}
+                    style={isActive ? { background: metal.color, color: "#111" } : {}}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${isActive ? "shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                  >
+                    {tf.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Summary Pills */}
+        {stats && (
+          <div className="mb-6 flex flex-wrap gap-3">
+             {[
+                { label: "Period Low", value: `$${fmtPrice(stats.low)}` },
                 { label: "Period High", value: `$${fmtPrice(stats.high)}` },
-                { label: "Data Points", value: chartData.length           },
+                { label: "Volatility", value: `${((stats.high - stats.low) / stats.low * 100).toFixed(2)}%` },
               ].map((pill) => (
-                <div key={pill.label} className="rounded-xl bg-secondary/50 border border-border/50 px-3 py-1.5 text-center">
-                  <span className="block text-[0.65rem] uppercase tracking-widest text-muted-foreground mb-0.5">{pill.label}</span>
-                  <span className="block text-sm font-semibold font-mono">{pill.value}</span>
+                <div key={pill.label} className="rounded-xl bg-secondary/40 border border-border/40 px-4 py-2 flex flex-col">
+                  <span className="text-[0.6rem] uppercase tracking-widest text-muted-foreground mb-0.5">{pill.label}</span>
+                  <span className="text-sm font-semibold font-mono">{pill.value}</span>
                 </div>
               ))}
-              <div className="text-xs text-muted-foreground italic">
-                Updated: {new Date().toLocaleDateString()}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Timeframe Selector */}
-        <div className="mb-5 flex gap-1 rounded-xl border border-border/50 bg-secondary/20 p-1 w-fit">
-          {TIMEFRAMES.map((tf) => {
-            const isActive = tf.value === activeTimeframe;
-            return (
-              <button
-                key={tf.value}
-                onClick={() => setActiveTimeframe(tf.value)}
-                style={isActive ? { background: metal.color, color: "#111" } : {}}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all ${
-                  isActive ? "" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                }`}
-              >
-                {tf.label}
-              </button>
-            );
-          })}
-        </div>
+          </div>
+        )}
 
         {/* Chart Body */}
-        <div className="flex-1 flex items-center justify-center min-h-[360px]">
+        <div className="flex-1 flex items-center justify-center min-h-[360px] relative">
           {isLoading ? (
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="h-10 w-10 animate-spin" style={{ color: metal.color }} />
-              <p className="text-muted-foreground animate-pulse text-sm">Loading {metal.label} history…</p>
+              <p className="text-muted-foreground animate-pulse text-sm">Synchronizing with live markets…</p>
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center gap-3 text-destructive text-center max-w-sm">
               <AlertCircle className="h-10 w-10" />
-              <p className="font-semibold">Failed to load data</p>
-              <p className="text-sm opacity-80">{error?.message || "Could not reach the price server."}</p>
+              <p className="font-semibold">Connection Error</p>
+              <p className="text-sm opacity-80">{error?.message || "Could not reach the market data provider."}</p>
             </div>
           ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={360}>
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id={`metalGradient-${activeMetalId}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor={metal.color} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={metal.color} stopOpacity={0.0}  />
+                    <stop offset="0%" stopColor={metal.color} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={metal.color} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis
                   dataKey="label"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={10}
-                  minTickGap={40}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }}
+                  tickMargin={12}
+                  minTickGap={60}
+                  tick={{ fontSize: 10, fill: "#888", fontWeight: 500 }}
                 />
                 <YAxis
                   domain={yDomain}
-                  tickFormatter={(v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(2)}`}
-                  width={74}
+                  tickFormatter={(v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(0)}`}
+                  width={60}
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={6}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }}
+                  tickMargin={8}
+                  tick={{ fontSize: 10, fill: "#888", fontWeight: 500 }}
                 />
                 <Tooltip
-                  content={<MetalTooltip color={metal.color} unit={metal.unit} />}
-                  cursor={{ stroke: metal.color, strokeWidth: 1, strokeDasharray: "4 4" }}
+                  content={<MetalTooltip color={metal.color} unit={activeWeightUnit} />}
+                  cursor={{ stroke: metal.color, strokeWidth: 1.5, strokeDasharray: "4 4" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="price"
                   stroke={metal.color}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   fill={`url(#metalGradient-${activeMetalId})`}
                   dot={false}
-                  activeDot={{ r: 4, fill: metal.color, stroke: "#fff", strokeWidth: 1.5 }}
-                  animationDuration={700}
+                  activeDot={{ r: 5, fill: metal.color, stroke: "#fff", strokeWidth: 2 }}
+                  animationDuration={1000}
                 />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-muted-foreground text-sm">No data available for this time range.</p>
+            <p className="text-muted-foreground text-sm">No historical data available for this selection.</p>
           )}
         </div>
 
         {/* Footer */}
-        <p className="mt-4 text-right text-[0.65rem] text-muted-foreground opacity-60">
-          Source: FRED · Federal Reserve Bank of St. Louis · Series: {metal.series}
-        </p>
+        <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+          <p className="text-[0.65rem] text-muted-foreground opacity-70 italic">
+            Last Updated: {new Date().toLocaleTimeString()} · Data: Gold Avenue Market API
+          </p>
+          <div className="flex gap-4">
+             <div className="flex items-center gap-1.5">
+               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+               <span className="text-[0.65rem] text-muted-foreground font-medium uppercase tracking-tighter">Live Market Feed</span>
+             </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
