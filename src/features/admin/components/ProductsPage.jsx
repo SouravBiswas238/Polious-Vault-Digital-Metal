@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Pencil, Trash2, X, Save, Loader2, AlertTriangle,
-  CheckCircle2, Package, Image as ImageIcon, DollarSign, Tag,
+  CheckCircle2, Package, Image as ImageIcon, DollarSign, Tag, List,
 } from "lucide-react";
 import { adminApi, productApi } from "@/lib/api";
 
@@ -21,10 +21,13 @@ const EMPTY_FORM = {
   image: "",
   inStock: true,
   stock: 0,
+  rating: 5.0,
+  reviewCount: 0,
   isBestseller: false,
   isGreatDeal: false,
   availableInUS: true,
   description: "",
+  specifications: {},
   pricingTiers: [{ qty: "1+", wireCheck: "", creditCard: "", bitcoin: "" }],
 };
 
@@ -72,8 +75,14 @@ function Toggle({ label, checked, onChange }) {
 function ProductModal({ product, onClose, onSaved }) {
   const [form, setForm] = useState(
     product
-      ? { ...product, pricingTiers: product.pricingTiers?.length ? product.pricingTiers : EMPTY_FORM.pricingTiers }
-      : { ...EMPTY_FORM }
+      ? {
+        ...product,
+        pricingTiers: product.pricingTiers?.length ? product.pricingTiers : EMPTY_FORM.pricingTiers,
+        specificationsArray: product.specifications
+          ? Object.entries(product.specifications).map(([k, v]) => ({ key: k, value: v }))
+          : [{ key: "", value: "" }]
+      }
+      : { ...EMPTY_FORM, specificationsArray: [{ key: "", value: "" }] }
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -95,6 +104,21 @@ function ProductModal({ product, onClose, onSaved }) {
   const removeTier = (i) =>
     setForm((f) => ({ ...f, pricingTiers: f.pricingTiers.filter((_, idx) => idx !== i) }));
 
+  const handleSpecChange = (i, key, val) => {
+    const specs = [...form.specificationsArray];
+    specs[i] = { ...specs[i], [key]: val };
+    setForm((f) => ({ ...f, specificationsArray: specs }));
+  };
+
+  const addSpec = () =>
+    setForm((f) => ({
+      ...f,
+      specificationsArray: [...f.specificationsArray, { key: "", value: "" }],
+    }));
+
+  const removeSpec = (i) =>
+    setForm((f) => ({ ...f, specificationsArray: f.specificationsArray.filter((_, idx) => idx !== i) }));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -107,6 +131,8 @@ function ProductModal({ product, onClose, onSaved }) {
         priceCreditCard: parseFloat(form.priceCreditCard) || 0,
         priceBitcoin: parseFloat(form.priceBitcoin) || 0,
         stock: parseInt(form.stock) || 0,
+        rating: parseFloat(form.rating) || 0,
+        reviewCount: parseInt(form.reviewCount) || 0,
         pricingTiers: form.pricingTiers
           .filter((t) => t.qty)
           .map((t) => ({
@@ -115,6 +141,9 @@ function ProductModal({ product, onClose, onSaved }) {
             creditCard: parseFloat(t.creditCard) || 0,
             bitcoin: parseFloat(t.bitcoin) || 0,
           })),
+        specifications: form.specificationsArray
+          .filter((s) => s.key && s.value)
+          .reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {}),
       };
       if (product?._id) {
         await adminApi.updateProduct(product._id, payload);
@@ -231,13 +260,38 @@ function ProductModal({ product, onClose, onSaved }) {
                       className={inputCls}
                     />
                   </div>
-                  <div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={labelCls}>Rating (0-5)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        value={form.rating}
+                        onChange={(e) => set("rating", e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Review Count</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.reviewCount}
+                        onChange={(e) => set("reviewCount", e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-span-2">
                     <label className={labelCls}>Description</label>
-                    <input
+                    <textarea
                       value={form.description}
                       onChange={(e) => set("description", e.target.value)}
-                      placeholder="Short product description..."
-                      className={inputCls}
+                      placeholder="Enter detailed product description..."
+                      rows={4}
+                      className={`${inputCls} min-h-[100px] resize-y`}
                     />
                   </div>
                 </div>
@@ -392,6 +446,57 @@ function ProductModal({ product, onClose, onSaved }) {
                 ))}
               </div>
               <p className="text-[10px] text-slate-400 mt-2.5">Qty examples: "1+", "5+", "10+". Shown in the hover pricing table on the storefront.</p>
+            </div>
+
+            {/* ── Row 4: Specifications ── */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <SectionLabel icon={List}>Product Specifications</SectionLabel>
+                <button
+                  type="button"
+                  onClick={addSpec}
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Plus className="h-3 w-3" /> Add Specification
+                </button>
+              </div>
+
+              <div className="grid grid-cols-[1fr_1fr_32px] gap-2 mb-2 px-1">
+                {["Key (Label)", "Value", ""].map((h) => (
+                  <p key={h} className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{h}</p>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                {form.specificationsArray.map((spec, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_1fr_32px] gap-2 items-center bg-slate-50 rounded-lg px-1 py-1">
+                    <input
+                      value={spec.key}
+                      onChange={(e) => handleSpecChange(i, "key", e.target.value)}
+                      placeholder="e.g. Purity"
+                      className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <input
+                      value={spec.value}
+                      onChange={(e) => handleSpecChange(i, "value", e.target.value)}
+                      placeholder="e.g. .9999 Fine Gold"
+                      className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    {form.specificationsArray.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => removeSpec(i)}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <div className="h-7 w-7" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2.5">Examples: Key: "Metal", Value: "Gold". These will be shown in a table on the product details page.</p>
             </div>
 
           </div>

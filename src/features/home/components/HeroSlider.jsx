@@ -13,7 +13,7 @@ const slides = [
     title: "Invest in timeless gold.",
     desc: "Investment-grade bars and sovereign coins from the world's most accredited refineries.",
     cta: "Shop Gold",
-    ctaTo: "/#shop",
+    ctaTo: "/shop/gold",
     badge: "99.99% Purity",
   },
   {
@@ -22,7 +22,7 @@ const slides = [
     title: "The everyman's metal.",
     desc: "Stack silver bullion at the tightest premiums in the market with insured vaulted storage.",
     cta: "Shop Silver",
-    ctaTo: "/#shop",
+    ctaTo: "/shop/silver",
     badge: "Best Value",
   },
   {
@@ -31,7 +31,7 @@ const slides = [
     title: "Diversify with rare metals.",
     desc: "Platinum, palladium and rhodium — for collectors and serious portfolios.",
     cta: "Explore Rare Metals",
-    ctaTo: "/#shop",
+    ctaTo: "/shop/gold",
     badge: "Limited Stock",
   },
 ];

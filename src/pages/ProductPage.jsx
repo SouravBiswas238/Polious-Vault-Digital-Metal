@@ -425,13 +425,13 @@ export default function ProductPage() {
           </section>
 
           {/* Specifications */}
-          {product.specifications && (
+          {product?.specifications && (
             <section id="sec-specifications">
               <h2 className="text-xl font-bold text-gray-900 mb-5 pb-3 border-b border-gray-200">Specifications</h2>
               <div className="border border-gray-200 rounded-2xl overflow-hidden max-w-3xl">
                 <table className="w-full text-sm">
                   <tbody>
-                    {Object.entries(product.specifications).map(([key, val], i) => (
+                    {Object.entries(product?.specifications)?.map(([key, val], i) => (
                       <tr
                         key={key}
                         className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}

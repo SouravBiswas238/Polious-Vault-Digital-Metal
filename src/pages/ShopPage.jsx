@@ -149,7 +149,7 @@ function ProductCard({ p }) {
             <tr className="bg-gray-100 text-gray-500">
               <th className="py-1 px-1.5 text-left font-semibold">Qty</th>
               <th className="py-1 px-1.5 text-right font-semibold">Wire/Check</th>
-              <th className="py-1 px-1.5 text-right font-semibold leading-tight">Credit Card/<br/>Paypal</th>
+              <th className="py-1 px-1.5 text-right font-semibold leading-tight">Credit Card/<br />Paypal</th>
               <th className="py-1 px-1.5 text-right font-semibold">Bitcoin</th>
             </tr>
           </thead>
@@ -193,9 +193,8 @@ function ProductCard({ p }) {
           <button
             onClick={handleAdd}
             disabled={!p.inStock}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md text-white text-xs font-semibold py-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-              added ? "bg-emerald-600" : "bg-[#1e3a5f] hover:bg-[#162c4a]"
-            }`}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md text-white text-xs font-semibold py-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${added ? "bg-emerald-600" : "bg-[#1e3a5f] hover:bg-[#162c4a]"
+              }`}
           >
             <ShoppingCart className="h-3.5 w-3.5" />
             {added ? "Added!" : p.inStock ? "Add to Cart" : "Sold Out"}
@@ -247,13 +246,12 @@ function Sidebar({ metalKey, activeSub, onSubChange, products }) {
               <button
                 key={item.label}
                 onClick={() => onSubChange(item.sub)}
-                className={`w-full text-left px-5 py-2.5 text-sm font-medium flex items-center gap-2.5 transition-colors ${
-                  activeSub === item.sub
+                className={`w-full text-left px-5 py-2.5 text-sm font-medium flex items-center gap-2.5 transition-colors ${activeSub === item.sub
                     ? "bg-blue-50 text-blue-700 border-r-[3px] border-blue-600"
                     : item.red
-                    ? "text-red-600 hover:bg-red-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                      ? "text-red-600 hover:bg-red-50"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 {item.icon && <item.icon className="h-4 w-4 shrink-0 opacity-70" />}
                 {item.label}
@@ -264,23 +262,21 @@ function Sidebar({ metalKey, activeSub, onSubChange, products }) {
             <div className="my-2 mx-4 border-t border-gray-100" />
 
             {/* Metal categories */}
-            {METALS.map((m) => (
+            {METALS?.map((m) => (
               <div key={m.key}>
                 <button
                   onClick={() =>
                     setExpandedMetal((prev) => (prev === m.key ? null : m.key))
                   }
-                  className={`w-full text-left px-5 py-2.5 text-sm font-semibold flex items-center justify-between transition-colors ${
-                    m.key === metalKey
+                  className={`w-full text-left px-5 py-2.5 text-sm font-semibold flex items-center justify-between transition-colors ${m.key === metalKey
                       ? "text-[#1e3a5f] bg-blue-50/60"
                       : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <span>{m.label}</span>
                   <ChevronDown
-                    className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
-                      expandedMetal === m.key ? "" : "-rotate-90"
-                    }`}
+                    className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${expandedMetal === m.key ? "" : "-rotate-90"
+                      }`}
                   />
                 </button>
 
@@ -299,11 +295,10 @@ function Sidebar({ metalKey, activeSub, onSubChange, products }) {
                               setExpandedSub((prev) => (prev === sub ? null : sub));
                             }
                           }}
-                          className={`w-full text-left pl-4 pr-5 py-2 text-sm transition-colors ${
-                            activeSub === sub
+                          className={`w-full text-left pl-4 pr-5 py-2 text-sm transition-colors ${activeSub === sub
                               ? "text-blue-700 font-semibold bg-blue-50"
                               : "text-gray-600 hover:text-[#1e3a5f] hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           {sub}
                         </button>
@@ -349,6 +344,8 @@ export default function ShopPage() {
 
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  console.log(METALS)
 
   useEffect(() => {
     let cancelled = false;
@@ -433,11 +430,10 @@ export default function ShopPage() {
             <div className="flex gap-2 flex-wrap mb-5 lg:hidden">
               <button
                 onClick={() => handleSubChange(null)}
-                className={`rounded-full px-4 py-2 text-xs font-semibold border transition-colors ${
-                  !activeSub
+                className={`rounded-full px-4 py-2 text-xs font-semibold border transition-colors ${!activeSub
                     ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 All
               </button>
@@ -445,11 +441,10 @@ export default function ShopPage() {
                 <button
                   key={sub}
                   onClick={() => handleSubChange(sub)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold border transition-colors ${
-                    activeSub === sub
+                  className={`rounded-full px-4 py-2 text-xs font-semibold border transition-colors ${activeSub === sub
                       ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {sub}
                 </button>
