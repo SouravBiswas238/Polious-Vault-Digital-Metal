@@ -2,18 +2,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ShoppingBag, Menu, ShoppingCart, Tag, UserCircle2, ChevronDown,
   Receipt, Wallet, Users, LogIn, UserPlus, LogOut, X,
-  Phone, BarChart2, Shield, Info,
+  Phone, BarChart2, Shield, Info, ArrowDownCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/features/cart/context/CartContext";
 import { useAuth } from "@/hooks/useAuth";
+import { orderApi } from "@/lib/api";
 import logo from "@/assets/logo.jpeg";
 
 const accountMenu = [
   { to: "/account/transactions", label: "Transaction Summary", icon: Receipt },
   { to: "/account/profile", label: "My Profile", icon: UserCircle2 },
-  { to: "/account/add-funds", label: "How to Add Funds", icon: Wallet },
+  { to: "/account/add-funds", label: "Add Funds", icon: Wallet },
+  { to: "/account/withdraw", label: "Withdraw Funds", icon: ArrowDownCircle },
   { to: "/account/refer", label: "Refer a Friend", icon: Users },
 ];
 
@@ -30,7 +32,18 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [canSell, setCanSell] = useState(false);
   const accountRef = useRef(null);
+
+  useEffect(() => {
+    if (user) {
+      orderApi.canSell()
+        .then(res => setCanSell(res.canSell))
+        .catch(() => setCanSell(false));
+    } else {
+      setCanSell(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const onClick = (e) => {
@@ -92,16 +105,18 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex items-center gap-1.5 rounded px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <link.icon className="h-4 w-4 text-gold/70" />
-                {link.label}
-              </Link>
-            ))}
+            {navLinks
+              .filter(link => link.to !== "/sell" || canSell)
+              .map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="flex items-center gap-1.5 rounded px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <link.icon className="h-4 w-4 text-gold/70" />
+                  {link.label}
+                </Link>
+              ))}
 
             {/* Account dropdown — only shown when logged in */}
             {user ? (
@@ -221,17 +236,19 @@ export function Navbar() {
           >
             <div className="flex flex-col p-4 gap-0.5">
               <div className="mb-1 px-3 text-[10px] uppercase tracking-wider text-white/35">Navigation</div>
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-                >
-                  <link.icon className="h-4 w-4 text-gold/60" />
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks
+                .filter(link => link.to !== "/sell" || canSell)
+                .map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <link.icon className="h-4 w-4 text-gold/60" />
+                    {link.label}
+                  </Link>
+                ))}
 
               {user && (
                 <>

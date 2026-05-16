@@ -19,8 +19,10 @@ import Account from "@/pages/account/Account";
 import Transactions from "@/pages/account/Transactions";
 import Profile from "@/pages/account/Profile";
 import AddFunds from "@/pages/account/AddFunds";
+import Withdraw from "@/pages/account/Withdraw";
 import Refer from "@/pages/account/Refer";
 import TwoFactorAuth from "@/pages/account/TwoFactorAuth";
+import OrderHistory from "@/pages/account/OrderHistory";
 import Admin from "@/pages/Admin";
 import SkeletonDemo from "@/pages/SkeletonDemo";
 import ResetPassword from "@/pages/ResetPassword";
@@ -113,9 +115,11 @@ export default function App() {
                 <Route path="/account" element={<Account />}>
                   <Route index element={<Navigate to="transactions" replace />} />
                   <Route path="transactions" element={<Transactions />} />
+                  <Route path="orders" element={<OrderHistory />} />
                   <Route path="profile" element={<Profile />} />
 
                   <Route path="add-funds" element={<AddFunds />} />
+                  <Route path="withdraw" element={<Withdraw />} />
                   <Route path="refer" element={<Refer />} />
                   <Route path="two-factor" element={<TwoFactorAuth />} />
                 </Route>

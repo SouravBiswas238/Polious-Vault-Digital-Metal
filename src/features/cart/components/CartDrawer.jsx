@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { orderApi } from "@/lib/api";
+import { calculateBuyBreakdown, calculateSellBreakdown } from "@/lib/taxUtils";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -54,50 +56,7 @@ const PAYMENT_METHODS = [
   },
 ];
 
-const SELL_PAYMENT_METHODS = [
-  {
-    id: "card",
-    icon: "https://img.icons8.com/color/96/visa.png",
-    label: "Credit / Debit Card",
-    desc: "Instant · 2.9% processing fee",
-    badge: null,
-  },
-  {
-    id: "google-pay",
-    icon: "https://img.icons8.com/color/96/google-pay.png",
-    label: "Google Pay",
-    desc: "Instant · No fee",
-    badge: null,
-  },
-  {
-    id: "PayPal",
-    icon: "https://img.icons8.com/color/96/paypal.png",
-    label: "PayPal",
-    desc: "Instant · No fee",
-    badge: null,
-  },
-  {
-    id: "eCheck",
-    icon: "https://img.icons8.com/color/96/bank.png",
-    label: "eCheck (ACH)",
-    desc: "2–4 business days · No fee",
-    badge: null,
-  },
-  {
-    id: "wire",
-    icon: "https://img.icons8.com/color/96/globe.png",
-    label: "Bank Wire Transfer",
-    desc: "1–2 business days · No fee",
-    badge: "Most Popular",
-  },
-  {
-    id: "crypto",
-    icon: "https://img.icons8.com/color/96/bitcoin.png",
-    label: "Cryptocurrency",
-    desc: "1 confirmation · 0.5% fee",
-    badge: null,
-  },
-];
+
 
 export function CartDrawer() {
   const {
@@ -135,110 +94,180 @@ export function CartDrawer() {
   const updateQty = activeTab === "buy" ? updateBuyQty : updateSellQty;
   const clearCart = activeTab === "buy" ? clearBuyCart : clearSellCart;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
       closeCart();
       navigate("/login?redirect=checkout");
       return;
     }
+    
+    if (activeTab === "sell") {
+      // For sell, we no longer need payment method selection.
+      // We go straight to confirmation/support.
+      handleConfirmSale({ label: "Not Specified (Handled by Support)" });
+      return;
+    }
+    
     setStep("payment");
   };
 
-  const handleConfirmSale = (method) => {
+  // Tax calculations
+  const buyBreakdown = activeTab === 'buy' ? calculateBuyBreakdown(total) : null;
+  
+  const sellBreakdowns = activeTab === 'sell' ? items.map(item => {
+    return calculateSellBreakdown(item.price, item.priceSell || item.price * 0.98, item.purchasedAt);
+  }) : [];
+
+  const totalSellProfit = sellBreakdowns.reduce((sum, b) => sum + b.profit, 0);
+  const totalSellTax = sellBreakdowns.reduce((sum, b) => sum + b.taxAmount, 0);
+  const finalSellAmount = sellBreakdowns.reduce((sum, b) => sum + b.finalAmount, 0);
+
+  // Tax Optimization Tip: If held for 22-23 months, advise waiting for month 25
+  const showTaxTip = activeTab === 'sell' && sellBreakdowns.some(b => b.holdingPeriodMonths >= 22 && b.holdingPeriodMonths < 24);
+
+  const handleConfirmSale = async (method) => {
     setLoading(true);
-    const cartLines = items
-      .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
-      .join("\n");
+    try {
+      const cartLines = items
+        .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
+        .join("\n");
 
-    const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
-    const email = user.personalInfo?.email || "";
-    const phone = user.personalInfo?.phoneNumber || "";
+      // Create formal order in database
+      await orderApi.create({
+        items: items.map(i => ({
+          productId: i.id,
+          name: i.name,
+          metal: i.metal,
+          weight: i.weight,
+          image: i.image,
+          qty: i.qty,
+          price: i.price,
+          purchasedAt: i.purchasedAt
+        })),
+        total: finalSellAmount,
+        profit: totalSellProfit,
+        taxAmount: totalSellTax,
+        taxType: sellBreakdowns[0]?.taxType || 'None', // Assuming same type for simplicity or store individually
+        goldValue: total,
+        type: 'Sell',
+        paymentMethod: method?.label || "Handled by Support"
+      });
 
-    const orderNote = [
-      "💰 SELL REQUEST",
-      "",
-      `Customer : ${fullName}`,
-      `User ID  : ${user._id || "N/A"}`,
-      `Email    : ${email}`,
-      "",
-      "Items I want to sell:",
-      cartLines,
-      "",
-      `Estimated Buyback Total : ${fmt(total)} (${count} item${count !== 1 ? "s" : ""})`,
-      `Preferred Payout Method : ${method.label}`,
-      "",
-      "Please assist me in completing this sale to Polyus Vault.",
-    ].join("\n");
+      const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
+      const email = user.personalInfo?.email || "";
+      const phone = user.personalInfo?.phoneNumber || "";
 
-    window.ssq = window.ssq || [];
-    window.ssq.push("setCustomer", {
-      user_id: user._id || email,
-      name: fullName,
-      email,
-      phone,
-      description: orderNote,
-    });
-    window.ssq.push("chatOpen");
+      const orderNote = [
+        "💰 SELL REQUEST",
+        "",
+        `Customer : ${fullName}`,
+        `User ID  : ${user._id || "N/A"}`,
+        `Email    : ${email}`,
+        "",
+        "Items I want to sell:",
+        cartLines,
+        "",
+        `Estimated Buyback Total : ${fmt(total)}`,
+        `Net Profit : ${fmt(totalSellProfit)}`,
+        `Tax Deducted : ${fmt(totalSellTax)} (${sellBreakdowns[0]?.taxType || 'N/A'})`,
+        `Final Amount : ${fmt(finalSellAmount)}`,
+        `Payout Method : ${method?.label || "To be discussed with support"}`,
+        "",
+        "Please assist me in completing this sale to Polyus Vault.",
+      ].join("\n");
 
-    setTimeout(() => {
-      window.ssq.push("sendTextMessage", orderNote);
+      window.ssq = window.ssq || [];
+      window.ssq.push("setCustomer", {
+        user_id: user._id || email,
+        name: fullName,
+        email,
+        phone,
+        description: orderNote,
+      });
+      window.ssq.push("chatOpen");
+
+      setTimeout(() => {
+        window.ssq.push("sendTextMessage", orderNote);
+        setLoading(false);
+        clearCart();
+        handleClose();
+      }, 1000);
+    } catch (err) {
+      alert(err.message || "Failed to process sale request.");
       setLoading(false);
-      clearCart();
-      handleClose();
-    }, 1000);
+    }
   };
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
-    const method = (activeTab === "buy" ? PAYMENT_METHODS : SELL_PAYMENT_METHODS).find((m) => m.id === selectedMethod);
-
-    if (activeTab === "sell") {
-      handleConfirmSale(method);
-      return;
-    }
+    const method = PAYMENT_METHODS.find((m) => m.id === selectedMethod);
 
     setLoading(true);
+    try {
+      const cartLines = items
+        .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
+        .join("\n");
 
-    const cartLines = items
-      .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
-      .join("\n");
+      // Create formal order in database
+      await orderApi.create({
+        items: items.map(i => ({
+          productId: i.id,
+          name: i.name,
+          metal: i.metal,
+          weight: i.weight,
+          image: i.image,
+          qty: i.qty,
+          price: i.price
+        })),
+        total: buyBreakdown.total,
+        gst: buyBreakdown.gst,
+        goldValue: buyBreakdown.actualGoldValue,
+        type: 'Buy',
+        paymentMethod: method.label
+      });
 
-    const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
-    const email = user.personalInfo?.email || "";
-    const phone = user.personalInfo?.phoneNumber || "";
+      const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
+      const email = user.personalInfo?.email || "";
+      const phone = user.personalInfo?.phoneNumber || "";
 
-    const orderNote = [
-      "🛒 BUY ORDER REQUEST",
-      "",
-      `Customer : ${fullName}`,
-      `User ID  : ${user._id || "N/A"}`,
-      `Email    : ${email}`,
-      "",
-      "Cart Items:",
-      cartLines,
-      "",
-      `Order Total    : ${fmt(total)} (${count} item${count !== 1 ? "s" : ""})`,
-      `Payment Method : ${method.label}`,
-      "",
-      "Please assist me in completing this purchase.",
-    ].join("\n");
+      const orderNote = [
+        "🛒 BUY ORDER REQUEST",
+        "",
+        `Customer : ${fullName}`,
+        `User ID  : ${user._id || "N/A"}`,
+        `Email    : ${email}`,
+        "",
+        "Cart Items:",
+        cartLines,
+        "",
+        `Actual Gold Value : ${fmt(buyBreakdown.actualGoldValue)}`,
+        `GST (3%)          : ${fmt(buyBreakdown.gst)}`,
+        `Order Total       : ${fmt(buyBreakdown.total)} (${count} item${count !== 1 ? "s" : ""})`,
+        `Payment Method    : ${method.label}`,
+        "",
+        "Please assist me in completing this purchase.",
+      ].join("\n");
 
-    window.ssq = window.ssq || [];
-    window.ssq.push("setCustomer", {
-      user_id: user._id || email,
-      name: fullName,
-      email,
-      phone,
-      description: orderNote,
-    });
-    window.ssq.push("chatOpen");
+      window.ssq = window.ssq || [];
+      window.ssq.push("setCustomer", {
+        user_id: user._id || email,
+        name: fullName,
+        email,
+        phone,
+        description: orderNote,
+      });
+      window.ssq.push("chatOpen");
 
-    setTimeout(() => {
-      window.ssq.push("sendTextMessage", orderNote);
+      setTimeout(() => {
+        window.ssq.push("sendTextMessage", orderNote);
+        setLoading(false);
+        clearCart();
+        handleClose();
+      }, 1000);
+    } catch (err) {
+      alert(err.message || "Failed to process purchase request.");
       setLoading(false);
-      clearCart();
-      handleClose();
-    }, 1000);
+    }
   };
 
   return (
@@ -411,7 +440,8 @@ export function CartDrawer() {
                                     </span>
                                     <button
                                       onClick={() => updateQty(item.id, item.qty + 1)}
-                                      className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold"
+                                      disabled={activeTab === 'sell' && item.qty >= (item.totalOwned || 0)}
+                                      className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold disabled:opacity-20 disabled:cursor-not-allowed"
                                       aria-label="Increase"
                                     >
                                       <Plus className="h-3 w-3" />
@@ -435,35 +465,65 @@ export function CartDrawer() {
                   <footer className="border-t border-border/50 bg-secondary/20 px-6 pt-5 pb-6 shrink-0 space-y-4">
                     {/* Order summary */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{activeTab === "buy" ? "Subtotal" : "Estimated Total"}</span>
-                        <span className="tabular-nums font-medium text-foreground">{fmt(total)}</span>
-                      </div>
-                      {activeTab === "buy" && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Insured shipping</span>
-                          <span className="text-muted-foreground italic">Calculated at checkout</span>
-                        </div>
+                      {activeTab === "buy" ? (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Gold Value</span>
+                            <span className="tabular-nums font-medium text-foreground">{fmt(total)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">GST (3%)</span>
+                            <span className="tabular-nums font-medium text-emerald-600">+{fmt(buyBreakdown.gst)}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Gold Buyback Price</span>
+                            <span className="tabular-nums font-medium text-foreground">{fmt(total)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Capital Gains Tax ({sellBreakdowns[0]?.taxRateLabel})</span>
+                            <span className="tabular-nums font-medium text-red-500">-{fmt(totalSellTax)}</span>
+                          </div>
+                        </>
                       )}
                     </div>
+
+                    {/* Tax Optimization Tip */}
+                    {showTaxTip && (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 mt-2">
+                        <div className="flex items-start gap-2.5">
+                          <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-[11px] font-bold text-blue-900 leading-tight">Tax Optimizer Strategy</p>
+                            <p className="text-[10px] text-blue-800 leading-relaxed">
+                              You've held some items for nearly 24 months. Waiting until Month 25 could switch your tax from your <b>Income Slab</b> to a flat <b>12.5% LTCG</b>, potentially saving you significant tax.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Total */}
                     <div className="flex items-center justify-between border-t border-border/50 pt-4">
                       <div>
                         <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                          {activeTab === "buy" ? "Total" : "Total Buyback"}
+                          {activeTab === "buy" ? "Total Payable" : "Final Payout"}
                         </p>
                         <p className={`text-2xl font-bold tabular-nums leading-tight ${activeTab === 'buy' ? 'text-gold' : 'text-emerald-600'}`}>
-                          {fmt(total)}
+                          {fmt(activeTab === 'buy' ? buyBreakdown.total : finalSellAmount)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                           {count} {count === 1 ? "item" : "items"}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {activeTab === "buy" ? "Wire/Check price" : "Live Market Price"}
-                        </p>
+                        {activeTab === 'sell' && (
+                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+                            Absolute Profit: {fmt(totalSellProfit)}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -521,11 +581,11 @@ export function CartDrawer() {
                       {activeTab === "buy" ? "Order Total" : "Buyback Total"}
                     </span>
                     <span className={`text-lg font-bold tabular-nums ${activeTab === 'buy' ? 'text-gold' : 'text-emerald-600'}`}>
-                      {fmt(total)}
+                      {fmt(activeTab === 'buy' ? buyBreakdown.total : finalSellAmount)}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {count} item{count !== 1 ? "s" : ""} · {activeTab === "buy" ? "Wire/Cheque price" : "Live Market Price"}
+                    {count} item{count !== 1 ? "s" : ""} · {activeTab === "buy" ? "Includes 3% GST" : "After Tax Deductions"}
                   </p>
                 </div>
 

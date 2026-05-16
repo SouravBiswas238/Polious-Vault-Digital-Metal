@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight, ShoppingCart, Info, Tag, Loader2, DollarSign } from "lucide-react";
 import { METALS } from "@/features/products/data/products";
-import { productApi } from "@/lib/api";
+import { productApi, orderApi } from "@/lib/api";
 import { useCart } from "@/features/cart/context/CartContext";
+import { useAuth } from "@/hooks/useAuth";
+import { calculateSellBreakdown } from "@/lib/taxUtils";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", {
@@ -36,9 +38,8 @@ function ProductCard({ p }) {
 
   const handleAdd = (e) => {
     e.preventDefault();
-    // For selling, we might use a slightly lower price (simulated here)
     const priceSell = p.priceSell || p.price * 0.98;
-    for (let i = 0; i < qty; i++) addSellItem({ ...p, id: p._id || p.id, price: priceSell });
+    addSellItem({ ...p, id: p._id || p.id, price: priceSell, qty });
     setAdded(true);
     setTimeout(() => { setAdded(false); setQty(1); }, 1800);
   };
@@ -70,10 +71,15 @@ function ProductCard({ p }) {
           {p.name}
         </Link>
 
-        <div className="flex items-center gap-2">
-          <Stars rating={p.rating} />
-          <span className="text-gray-400 text-xs font-medium">
-            {p.reviewCount} Reviews
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Stars rating={p.rating} />
+            <span className="text-gray-400 text-xs font-medium">
+              {p.reviewCount} Reviews
+            </span>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+            Owned: {p.totalOwned}
           </span>
         </div>
 
@@ -88,6 +94,27 @@ function ProductCard({ p }) {
           </div>
         </div>
 
+        {/* Tax Preview */}
+        {p.purchasedAt && (
+          <div className="mt-2 p-2 rounded-lg bg-gray-50 border border-gray-100 space-y-1">
+            <div className="flex justify-between text-[10px]">
+              <span className="text-gray-500">Holding Period:</span>
+              <span className="font-bold text-gray-700">
+                {Math.floor((new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44))} months
+              </span>
+            </div>
+            <div className="flex justify-between text-[10px]">
+              <span className="text-gray-500">Tax Class:</span>
+              <span className={`font-bold ${
+                (new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44) >= 24 
+                ? "text-blue-600" : "text-amber-600"
+              }`}>
+                {(new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44) >= 24 ? "LTCG (12.5%)" : "STCG (Slab)"}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-stretch gap-2 mt-auto pt-1">
           <div className="flex items-stretch border border-gray-300 rounded-lg overflow-hidden">
             <button
@@ -100,8 +127,9 @@ function ProductCard({ p }) {
               {qty}
             </span>
             <button
-              onClick={() => setQty((q) => q + 1)}
-              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium"
+              onClick={() => setQty((q) => Math.min(p.totalOwned, q + 1))}
+              disabled={qty >= p.totalOwned}
+              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg font-medium"
             >
               +
             </button>
@@ -223,24 +251,50 @@ export default function SellPage() {
   const metalKey = metal.charAt(0).toUpperCase() + metal.slice(1);
   const metalMeta = METALS.find((m) => m.key === metalKey) || METALS[0];
 
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [canSell, setCanSell] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate("/login?redirect=/sell");
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
-    productApi.list(metalKey)
-      .then((data) => { if (!cancelled) setAllProducts(Array.isArray(data) ? data : []); })
-      .catch(() => { if (!cancelled) setAllProducts([]); })
+
+    // Fetch only owned products for selling
+    orderApi.ownedProducts()
+      .then((data) => {
+        if (!cancelled) {
+          setAllProducts(Array.isArray(data) ? data : []);
+          setCanSell(data.length > 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAllProducts([]);
+          setCanSell(false);
+        }
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
+
     return () => { cancelled = true; };
-  }, [metalKey]);
+  }, [user, authLoading, navigate]);
 
   const handleSubChange = (sub) => {
     const params = { metal };
     if (sub) params.sub = sub;
     setSearchParams(params);
   };
+
+  if (authLoading) return null;
+  if (!user) return null;
 
   let products = allProducts;
   if (activeSub === "high-demand") {
@@ -296,6 +350,22 @@ export default function SellPage() {
                 {products.map((p) => (
                   <ProductCard key={p._id || p.id} p={p} />
                 ))}
+              </div>
+            ) : canSell === false ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="h-20 w-20 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-6 text-emerald-600">
+                  <ShoppingCart className="h-10 w-10" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">No items to sell</h2>
+                <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8">
+                  You haven't purchased any items yet. You can only sell products that you have previously bought from Polyus Vault.
+                </p>
+                <Link
+                  to="/shop/gold"
+                  className="rounded-lg bg-[#1e3a5f] text-white text-sm font-bold px-8 py-3 hover:bg-[#162c4a] transition-all shadow-md"
+                >
+                  Go to Shop
+                </Link>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center">

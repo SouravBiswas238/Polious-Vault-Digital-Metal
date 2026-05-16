@@ -26,8 +26,15 @@ export function CartProvider({ children }) {
   const addSellItem = (p) => {
     setSellItems((prev) => {
       const found = prev.find((i) => i.id === p.id);
-      if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
-      return [...prev, { ...p, qty: 1 }];
+      const currentQty = found ? found.qty : 0;
+      const addQty = p.qty || 1;
+      const maxQty = p.totalOwned || Infinity;
+
+      const newQty = Math.min(currentQty + addQty, maxQty);
+      if (newQty === currentQty && found) return prev;
+
+      if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: newQty } : i));
+      return [...prev, { ...p, qty: newQty }];
     });
     setIsOpen(true);
   };
@@ -36,7 +43,7 @@ export function CartProvider({ children }) {
 
   const updateSellQty = (id, qty) =>
     setSellItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: Math.max(0, qty) } : i)).filter((i) => i.qty > 0),
+      prev.map((i) => (i.id === id ? { ...i, qty: Math.min(qty, i.totalOwned || Infinity) } : i)).filter((i) => i.qty > 0),
     );
 
   const value = useMemo(

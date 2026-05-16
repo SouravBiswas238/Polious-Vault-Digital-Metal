@@ -110,6 +110,12 @@ export const accountApi = {
   async refer(email) {
     return delay({ success: true, email });
   },
+  async requestWithdrawal(amount, method) {
+    return request("/auth/withdraw", {
+      method: "POST",
+      body: JSON.stringify({ amount, method }),
+    });
+  },
 };
 
 export const balanceApi = {
@@ -154,6 +160,30 @@ export const adminApi = {
       headers: { "x-admin-key": ADMIN_KEY },
     });
   },
+  async getWithdrawals() {
+    return request("/admin/withdrawals", {
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
+  },
+  async approveWithdrawal(id) {
+    return request(`/admin/withdrawals/${id}/approve`, {
+      method: "POST",
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
+  },
+  async rejectWithdrawal(id) {
+    return request(`/admin/withdrawals/${id}/reject`, { method: "POST", headers: { "x-admin-key": ADMIN_KEY } });
+  },
+  async getOrders() {
+    return request("/admin/orders", { headers: { "x-admin-key": ADMIN_KEY } });
+  },
+  async updateOrderStatus(id, status) {
+    return request(`/admin/orders/${id}/status`, {
+      method: "PATCH",
+      headers: { "x-admin-key": ADMIN_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+  },
 };
 
 export const metalsApi = {
@@ -162,5 +192,23 @@ export const metalsApi = {
   },
   async proxy(symbol, period = "1d", weight_unit = "ounce") {
     return request(`/metals/proxy?symbol=${symbol}&period=${period}&weight_unit=${weight_unit}`);
+  },
+};
+ 
+export const orderApi = {
+  async list() {
+    return request("/orders");
+  },
+  async canSell() {
+    return request("/orders/can-sell");
+  },
+  async ownedProducts() {
+    return request("/orders/owned-products");
+  },
+  async create(data) {
+    return request("/orders", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 };

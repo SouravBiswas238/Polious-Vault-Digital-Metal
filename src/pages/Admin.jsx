@@ -7,12 +7,16 @@ import AdminSidebar   from "@/features/admin/components/AdminSidebar";
 import DashboardPage  from "@/features/admin/components/DashboardPage";
 import UsersPage      from "@/features/admin/components/UsersPage";
 import ProductsPage   from "@/features/admin/components/ProductsPage";
+import OrdersPage     from "@/features/admin/components/OrdersPage";
+import WithdrawalsPage from "@/features/admin/components/WithdrawalsPage";
 import PlaceholderPage from "@/features/admin/components/PlaceholderPage";
 
 const PAGE_TITLES = {
   dashboard:    "Dashboard",
   users:        "Users",
+  orders:       "Orders",
   products:     "Products",
+  withdrawals:  "Withdrawals",
   transactions: "Transactions",
   settings:     "Settings",
 };
@@ -110,6 +114,8 @@ export default function Admin() {
                 />
               )}
               {activePage === "products" && <ProductsPage />}
+              {activePage === "orders" && <OrdersPage />}
+              {activePage === "withdrawals" && <WithdrawalsPage />}
               {activePage === "transactions" && (
                 <PlaceholderPage
                   title="Transactions"

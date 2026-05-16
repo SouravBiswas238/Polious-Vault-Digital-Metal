@@ -1,12 +1,14 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Receipt, UserCircle2, Wallet, Users, TrendingUp, ShieldCheck } from "lucide-react";
+import { Receipt, UserCircle2, Wallet, Users, TrendingUp, ShieldCheck, ArrowDownCircle, ShoppingBag } from "lucide-react";
 import { useBalance } from "@/hooks/useBalance";
 import { useAuth } from "@/hooks/useAuth";
 
 const links = [
   { to: "/account/transactions", label: "Transactions", icon: Receipt },
+  { to: "/account/orders", label: "Order History", icon: ShoppingBag },
   { to: "/account/profile", label: "My Profile", icon: UserCircle2 },
   { to: "/account/add-funds", label: "Add Funds", icon: Wallet },
+  { to: "/account/withdraw", label: "Withdraw", icon: ArrowDownCircle },
   { to: "/account/two-factor", label: "Two-Factor Auth", icon: ShieldCheck },
   { to: "/account/refer", label: "Refer a Friend", icon: Users },
 ];
@@ -65,12 +67,20 @@ export default function Account() {
                 )}
               </div>
               <div className="mt-0.5 text-xs text-white/30">USD • Updated live</div>
-              <Link
-                to="/account/add-funds"
-                className="mt-4 flex items-center justify-center gap-1.5 rounded-lg bg-gold/15 border border-gold/25 py-2 text-xs font-semibold text-gold hover:bg-gold/25 transition-colors cursor-pointer"
-              >
-                + Add Funds
-              </Link>
+              <div className="mt-4 flex gap-2">
+                <Link
+                  to="/account/add-funds"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-gold/15 border border-gold/25 py-2 text-[11px] font-semibold text-gold hover:bg-gold/25 transition-colors cursor-pointer"
+                >
+                  + Add Funds
+                </Link>
+                <Link
+                  to="/account/withdraw"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white/5 border border-white/10 py-2 text-[11px] font-semibold text-white/70 hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  Withdraw
+                </Link>
+              </div>
             </div>
           </div>
 

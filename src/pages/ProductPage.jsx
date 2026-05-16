@@ -196,8 +196,8 @@ export default function ProductPage() {
                     key={i}
                     onClick={() => setActiveThumb(i)}
                     className={`flex-1 border-2 rounded-xl overflow-hidden flex items-center justify-center bg-gray-50 transition-all duration-200 ${activeThumb === i
-                        ? "border-[#1e3a5f] shadow-md"
-                        : "border-gray-200 hover:border-gray-400"
+                      ? "border-[#1e3a5f] shadow-md"
+                      : "border-gray-200 hover:border-gray-400"
                       }`}
                     style={{ height: 88 }}
                   >
@@ -293,10 +293,10 @@ export default function ProductPage() {
                 onClick={handleAdd}
                 disabled={!product.inStock}
                 className={`flex-1 flex items-center justify-center gap-2.5 rounded-xl font-bold text-base py-4 transition-all duration-200 shadow-sm ${added
-                    ? "bg-green-600 text-white shadow-green-200"
-                    : product.inStock
-                      ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a] hover:shadow-lg active:scale-[0.98]"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  ? "bg-green-600 text-white shadow-green-200"
+                  : product.inStock
+                    ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a] hover:shadow-lg active:scale-[0.98]"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
               >
                 {added ? (
@@ -405,8 +405,8 @@ export default function ProductPage() {
                 key={id}
                 onClick={() => scrollToSection(id)}
                 className={`px-6 py-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200 ${activeTab === id
-                    ? "border-[#1e3a5f] text-[#1e3a5f]"
-                    : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
+                  ? "border-[#1e3a5f] text-[#1e3a5f]"
+                  : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
                   }`}
               >
                 {label}
@@ -467,14 +467,14 @@ export default function ProductPage() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 italic">
-                  All products from {product.mintInfo.name} undergo rigorous quality control and independent assay verification before leaving the mint facility. Polyus Vault is an authorized distributor.
+                  All products from {product?.mintInfo?.name || "a certified mint"} undergo rigorous quality control and independent assay verification before leaving the mint facility. Polyus Vault is an authorized distributor.
                 </p>
               </div>
             ) : (
               <p className="max-w-3xl">
                 This product is minted by{" "}
                 <strong className="text-gray-900">
-                  {product.specifications?.Mint || product.specifications?.mint || "a certified mint"}
+                  {product?.specifications?.Mint || product?.specifications?.mint || "a certified mint"}
                 </strong>
                 , ensuring the highest standards of quality, purity, and craftsmanship.
               </p>
@@ -491,16 +491,16 @@ export default function ProductPage() {
               <div className="flex items-center gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-200">
                 <div className="text-center shrink-0">
                   <p className="text-6xl font-black text-gray-900 leading-none">
-                    {product.rating.toFixed(1)}
+                    {product?.rating?.toFixed(1)}
                   </p>
-                  <Stars rating={product.rating} size={22} />
-                  <p className="text-xs text-gray-500 mt-1.5">{product.reviewCount} reviews</p>
+                  <Stars rating={product?.rating} size={22} />
+                  <p className="text-xs text-gray-500 mt-1.5">{product?.reviewCount} reviews</p>
                 </div>
                 <div className="flex-1 hidden sm:block">
                   {[5, 4, 3, 2, 1].map((star) => {
-                    const count = (product.reviews || []).filter((r) => Math.round(r.rating) === star).length;
-                    const pct = product.reviews?.length
-                      ? Math.round((count / product.reviews.length) * 100)
+                    const count = (product?.reviews || []).filter((r) => Math.round(r.rating) === star).length;
+                    const pct = product?.reviews?.length
+                      ? Math.round((count / product?.reviews?.length) * 100)
                       : star === 5 ? 90 : 0;
                     return (
                       <div key={star} className="flex items-center gap-2.5 mb-1.5">
@@ -517,25 +517,25 @@ export default function ProductPage() {
               </div>
 
               {/* Review cards */}
-              {product.reviews?.length > 0 ? (
+              {product?.reviews?.length > 0 ? (
                 <div className="space-y-4">
-                  {product.reviews.map((rev, i) => (
+                  {product?.reviews?.map((rev, i) => (
                     <div key={i} className="border border-gray-200 rounded-2xl p-6 bg-white hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <Stars rating={rev.rating} size={16} />
+                            <Stars rating={rev?.rating} size={16} />
                             <span className="text-xs text-gray-400 font-medium">Verified Purchase</span>
                           </div>
-                          <p className="font-bold text-gray-900 text-base">{rev.title}</p>
+                          <p className="font-bold text-gray-900 text-base">{rev?.title}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-semibold text-gray-800 text-sm">{rev.name}</p>
-                          <p className="text-xs text-gray-400">{rev.location}</p>
+                          <p className="font-semibold text-gray-800 text-sm">{rev?.name}</p>
+                          <p className="text-xs text-gray-400">{rev?.location}</p>
                         </div>
                       </div>
-                      <p className="text-gray-600 text-sm leading-relaxed">{rev.text}</p>
-                      <p className="text-xs text-gray-400 mt-3">{rev.date}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed">{rev?.text}</p>
+                      <p className="text-xs text-gray-400 mt-3">{rev?.date}</p>
                     </div>
                   ))}
                 </div>
@@ -551,7 +551,7 @@ export default function ProductPage() {
             <div className="space-y-4 max-w-3xl">
               <p>
                 Proper storage of precious metals is essential to maintain their condition and value.
-                Store your {product.metal.toLowerCase()} in a cool, dry environment away from direct
+                Store your {product?.metal?.toLowerCase()} in a cool, dry environment away from direct
                 sunlight and humidity.
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600">
