@@ -8,6 +8,7 @@ const shopLinks = [
   { label: "Platinum", to: "/shop/platinum" },
   { label: "Palladium", to: "/shop/palladium" },
   { label: "Rhodium", to: "/shop/rhodium" },
+  { label: "Sell to Polyus", to: "/sell" },
 ];
 
 const accountLinks = [

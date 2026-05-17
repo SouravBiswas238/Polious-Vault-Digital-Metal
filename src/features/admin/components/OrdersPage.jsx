@@ -7,7 +7,7 @@ import {
 import { adminApi } from "@/lib/api";
 import { formatUSD } from "../constants";
 
-const STATUS_OPTIONS = ["Pending", "Processing", "Delivered", "Vaulted", "Cancelled"];
+const STATUS_OPTIONS = ["Pending", "Processing", "Vaulted", "Completed", "Cancelled"];
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -161,13 +161,13 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        order.status === 'Vaulted' || order.status === 'Delivered' ? 'bg-blue-50 text-blue-600' : 
+                        order.status === 'Vaulted' || order.status === 'Completed' ? 'bg-blue-50 text-blue-600' : 
                         order.status === 'Cancelled' ? 'bg-red-50 text-red-600' : 
                         order.status === 'Pending' ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-600'
                       }`}>
                         {order.status === 'Pending' && <Clock className="h-3 w-3" />}
                         {order.status === 'Processing' && <RefreshCw className="h-3 w-3 animate-spin" />}
-                        {(order.status === 'Delivered' || order.status === 'Vaulted') && <CheckCircle2 className="h-3 w-3" />}
+                        {(order.status === 'Completed' || order.status === 'Vaulted') && <CheckCircle2 className="h-3 w-3" />}
                         {order.status === 'Cancelled' && <XCircle className="h-3 w-3" />}
                         {order.status}
                       </span>

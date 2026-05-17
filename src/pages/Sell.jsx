@@ -36,8 +36,11 @@ function ProductCard({ p }) {
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
 
+  const isOutOfStockForSell = p.availableToSell <= 0;
+
   const handleAdd = (e) => {
     e.preventDefault();
+    if (isOutOfStockForSell) return;
     const priceSell = p.priceSell || p.price * 0.98;
     addSellItem({ ...p, id: p._id || p.id, price: priceSell, qty });
     setAdded(true);
@@ -46,13 +49,17 @@ function ProductCard({ p }) {
 
   return (
     <div
-      className="relative bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300 group"
+      className={`relative bg-white border rounded-xl flex flex-col overflow-hidden transition-all duration-300 group ${
+        isOutOfStockForSell ? "opacity-75 border-gray-100" : "border-gray-200 hover:shadow-xl hover:border-gray-300"
+      }`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image area */}
       <Link to={`/product/${p._id || p.id}`} className="relative block overflow-hidden shrink-0">
-        <div className="h-56 flex items-center justify-center p-6 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-300">
+        <div className={`h-56 flex items-center justify-center p-6 transition-colors duration-300 ${
+          isOutOfStockForSell ? "bg-gray-100/50 grayscale-[0.5]" : "bg-gray-50 group-hover:bg-gray-100"
+        }`}>
           <img
             src={p.image}
             alt={p.name}
@@ -60,6 +67,13 @@ function ProductCard({ p }) {
             loading="lazy"
           />
         </div>
+        {p.isSellPending && (
+          <div className="absolute top-3 left-3">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 text-white text-[10px] font-bold shadow-lg ring-2 ring-white">
+              <Loader2 className="h-3 w-3 animate-spin" /> SELL PENDING
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* Card body */}
@@ -78,9 +92,16 @@ function ProductCard({ p }) {
               {p.reviewCount} Reviews
             </span>
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-            Owned: {p.totalOwned}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+              In Vault: {p.totalOwned}
+            </span>
+            {p.availableToSell < p.totalOwned && (
+              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-tight">
+                {p.availableToSell} Available
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mt-0.5">
@@ -119,27 +140,38 @@ function ProductCard({ p }) {
           <div className="flex items-stretch border border-gray-300 rounded-lg overflow-hidden">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium"
+              disabled={isOutOfStockForSell}
+              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-20 transition-colors text-lg font-medium"
             >
               −
             </button>
-            <span className="w-9 flex items-center justify-center text-sm font-semibold text-gray-800 border-x border-gray-300 bg-white">
-              {qty}
+            <span className={`w-9 flex items-center justify-center text-sm font-semibold border-x border-gray-300 bg-white ${isOutOfStockForSell ? "text-gray-400" : "text-gray-800"}`}>
+              {isOutOfStockForSell ? 0 : qty}
             </span>
             <button
-              onClick={() => setQty((q) => Math.min(p.totalOwned, q + 1))}
-              disabled={qty >= p.totalOwned}
-              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg font-medium"
+              onClick={() => setQty((q) => Math.min(p.availableToSell, q + 1))}
+              disabled={isOutOfStockForSell || qty >= p.availableToSell}
+              className="w-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-20 disabled:cursor-not-allowed transition-colors text-lg font-medium"
             >
               +
             </button>
           </div>
           <button
             onClick={handleAdd}
-            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold py-2.5 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-200"
+            disabled={isOutOfStockForSell || added}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg text-sm font-bold py-2.5 transition-all duration-200 ${
+              isOutOfStockForSell 
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
+                : "bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
+            }`}
           >
-            <DollarSign className="h-4 w-4" />
-            {added ? "Added!" : "Sell to Polyus"}
+            {added ? (
+              "Added!"
+            ) : isOutOfStockForSell ? (
+              "Request Pending"
+            ) : (
+              <><DollarSign className="h-4 w-4" /> Sell to Polyus</>
+            )}
           </button>
         </div>
       </div>
@@ -352,20 +384,50 @@ export default function SellPage() {
                 ))}
               </div>
             ) : canSell === false ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="h-20 w-20 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-6 text-emerald-600">
-                  <ShoppingCart className="h-10 w-10" />
+                  <Tag className="h-10 w-10" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">No items to sell</h2>
-                <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8">
-                  You haven't purchased any items yet. You can only sell products that you have previously bought from Polyus Vault.
+                <h2 className="text-3xl font-bold text-gray-900 mb-3">No items to sell</h2>
+                <p className="text-gray-500 max-w-lg mx-auto mb-10 leading-relaxed">
+                  You haven't purchased any items yet. You can only sell products that you have previously bought from Polyus Vault and are currently in your vault.
                 </p>
-                <Link
-                  to="/shop/gold"
-                  className="rounded-lg bg-[#1e3a5f] text-white text-sm font-bold px-8 py-3 hover:bg-[#162c4a] transition-all shadow-md"
-                >
-                  Go to Shop
-                </Link>
+                
+                <div className="w-full max-w-4xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {METALS.map((m) => (
+                      <Link
+                        key={m.key}
+                        to={`/shop/${m.key.toLowerCase()}`}
+                        className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:border-gold/50 hover:shadow-lg"
+                      >
+                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-50 text-gray-400 transition-colors group-hover:bg-gold/10 group-hover:text-gold">
+                          <ShoppingCart className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Buy {m.label}</h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">{m.tagline}</p>
+                        <div className="mt-4 flex items-center gap-1.5 text-sm font-bold text-[#1e3a5f] group-hover:text-gold">
+                          Visit Store <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-12 flex items-center gap-4">
+                  <Link
+                    to="/shop/gold"
+                    className="rounded-full bg-[#1e3a5f] text-white text-sm font-bold px-10 py-3.5 hover:bg-[#162c4a] transition-all shadow-md active:scale-95"
+                  >
+                    Browse All Products
+                  </Link>
+                  <Link
+                    to="/live-charts"
+                    className="rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-bold px-10 py-3.5 hover:bg-gray-50 transition-all active:scale-95"
+                  >
+                    Check Market Prices
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center">

@@ -375,12 +375,25 @@ export function CartDrawer() {
                             : "Select items from our list that you want to sell back to us."}
                         </p>
                       </div>
-                      <button
-                        onClick={handleClose}
-                        className="mt-2 text-xs font-semibold text-gold hover:underline underline-offset-4"
-                      >
-                        {activeTab === "buy" ? "Continue Shopping →" : "Browse Sell List →"}
-                      </button>
+                      <div className="flex flex-col gap-2 mt-2">
+                        <button
+                          onClick={handleClose}
+                          className="text-xs font-bold text-gold hover:underline underline-offset-4"
+                        >
+                          {activeTab === "buy" ? "Continue Shopping →" : "Browse Sell List →"}
+                        </button>
+                        {activeTab === "buy" && (
+                          <button
+                            onClick={() => {
+                              handleClose();
+                              navigate("/sell");
+                            }}
+                            className="text-xs font-medium text-emerald-600 hover:underline underline-offset-4"
+                          >
+                            Sell to Polyus instead? →
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <ul className="space-y-1">

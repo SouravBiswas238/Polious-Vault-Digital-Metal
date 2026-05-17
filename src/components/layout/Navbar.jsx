@@ -103,10 +103,8 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks
-              .filter(link => link.to !== "/sell" || canSell)
               .map((link) => (
                 <Link
                   key={link.to}
@@ -237,7 +235,6 @@ export function Navbar() {
             <div className="flex flex-col p-4 gap-0.5">
               <div className="mb-1 px-3 text-[10px] uppercase tracking-wider text-white/35">Navigation</div>
               {navLinks
-                .filter(link => link.to !== "/sell" || canSell)
                 .map((link) => (
                   <Link
                     key={link.to}
