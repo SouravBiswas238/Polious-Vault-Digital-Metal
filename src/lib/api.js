@@ -133,10 +133,10 @@ export const adminApi = {
   async getUserBalance(userId) {
     return request(`/admin/users/${userId}/balance`, { headers: { "x-admin-key": ADMIN_KEY } });
   },
-  async addBalance(userId, amount) {
+  async addBalance(userId, amount, paymentMethod) {
     return request(`/admin/users/${userId}/add-balance`, {
       method: "POST",
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ amount, paymentMethod }),
       headers: { "x-admin-key": ADMIN_KEY },
     });
   },

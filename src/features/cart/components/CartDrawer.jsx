@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -54,6 +54,13 @@ const PAYMENT_METHODS = [
     desc: "1 confirmation · 0.5% fee",
     badge: null,
   },
+  {
+    id: "wallet",
+    icon: Wallet,
+    label: "Polyus Wallet",
+    desc: "Instant · Pay with your account balance",
+    badge: null,
+  },
 ];
 
 
@@ -75,11 +82,13 @@ export function CartDrawer() {
   const [step, setStep] = useState("cart");
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
 
   const resetDrawer = () => {
     setStep("cart");
     setSelectedMethod(null);
     setLoading(false);
+    setCheckoutError("");
   };
 
   const handleClose = () => {
@@ -115,7 +124,14 @@ export function CartDrawer() {
   const buyBreakdown = activeTab === 'buy' ? calculateBuyBreakdown(total) : null;
   
   const sellBreakdowns = activeTab === 'sell' ? items.map(item => {
-    return calculateSellBreakdown(item.price, item.priceSell || item.price * 0.98, item.purchasedAt);
+    const originalBuyPrice = item.buyPrice || (item.price / 0.98);
+    const singleBreakdown = calculateSellBreakdown(originalBuyPrice, item.price, item.purchasedAt);
+    return {
+      ...singleBreakdown,
+      profit: singleBreakdown.profit * item.qty,
+      taxAmount: singleBreakdown.taxAmount * item.qty,
+      finalAmount: singleBreakdown.finalAmount * item.qty,
+    };
   }) : [];
 
   const totalSellProfit = sellBreakdowns.reduce((sum, b) => sum + b.profit, 0);
@@ -193,7 +209,7 @@ export function CartDrawer() {
         handleClose();
       }, 1000);
     } catch (err) {
-      alert(err.message || "Failed to process sale request.");
+      setCheckoutError(err.message || "Failed to process sale request.");
       setLoading(false);
     }
   };
@@ -265,7 +281,7 @@ export function CartDrawer() {
         handleClose();
       }, 1000);
     } catch (err) {
-      alert(err.message || "Failed to process purchase request.");
+      setCheckoutError(err.message || "Failed to process purchase request.");
       setLoading(false);
     }
   };
@@ -655,15 +671,42 @@ export function CartDrawer() {
 
                 {/* Confirm footer */}
                 <div className="border-t border-border/50 bg-secondary/20 px-6 py-5 space-y-3 shrink-0">
+                  <AnimatePresence>
+                    {(selectedMethod === 'wallet' && user.balance < buyBreakdown.total) || checkoutError ? (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3">
+                          <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-[11px] font-bold text-red-900 leading-tight">
+                              {checkoutError ? "Transaction Failed" : "Insufficient Balance"}
+                            </p>
+                            <p className="text-[10px] text-red-800 leading-relaxed">
+                              {checkoutError 
+                                ? checkoutError 
+                                : `Your wallet balance (${fmt(user.balance)}) is less than the required amount (${fmt(buyBreakdown.total)}). Please add funds or select another payment method.`}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+
                   <motion.button
                     whileHover={{ scale: selectedMethod ? 1.01 : 1 }}
                     whileTap={{ scale: selectedMethod ? 0.98 : 1 }}
                     onClick={handleConfirmPayment}
-                    disabled={!selectedMethod || loading}
+                    disabled={!selectedMethod || loading || (selectedMethod === 'wallet' && user.balance < buyBreakdown.total)}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3.5 text-sm font-bold text-gold-foreground shadow-[0_8px_32px_-8px_oklch(0.78_0.13_80/0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_40px_-8px_oklch(0.78_0.13_80/0.7)]"
                   >
                     {loading ? (
                       <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Support…</>
+                    ) : selectedMethod === 'wallet' && user.balance < buyBreakdown.total ? (
+                      "Insufficient Wallet Balance"
                     ) : (
                       <><MessageCircle className="h-4 w-4" /> Confirm &amp; Contact Support</>
                     )}

@@ -27,6 +27,7 @@ export default function Transactions() {
                 <th className="px-4 py-3">ID</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Description</th>
+                <th className="px-4 py-3">Method</th>
                 <th className="px-4 py-3 text-right">Amount</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
@@ -42,7 +43,19 @@ export default function Transactions() {
                       {t.type}
                     </span>
                   </td>
-                  <td className="px-4 py-3">{t.description}</td>
+                  <td className="px-4 py-3">{t.type === "Deposit" ?
+                    (
+                      t.paymentMethod && t.paymentMethod !== "—" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 border border-gold/20 px-2.5 py-0.5 text-xs font-semibold text-gold">
+                          {t.paymentMethod}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50 font-medium">—</span>
+                      )
+                    ) : t.description}</td>
+                  <td className="px-4 py-3">
+                    { }
+                  </td>
                   <td className={`px-4 py-3 text-right font-semibold ${t.amount < 0 ? "text-destructive" : "text-foreground"}`}>
                     {t.amount < 0 ? "-" : "+"}${Math.abs(t.amount).toLocaleString()}
                   </td>

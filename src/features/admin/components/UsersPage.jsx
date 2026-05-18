@@ -12,6 +12,7 @@ export default function UsersPage({ users, usersLoading, loadUsers, onOp }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userBalance, setUserBalance]   = useState(null);
   const [amount, setAmount]             = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Bank Wire Transfer");
   const [loading, setLoading]           = useState(false);
   const [result, setResult]             = useState(null);
   const [showModal, setShowModal]       = useState(false);
@@ -20,6 +21,7 @@ export default function UsersPage({ users, usersLoading, loadUsers, onOp }) {
     setSelectedUser(user);
     setResult(null);
     setAmount("");
+    setPaymentMethod("Bank Wire Transfer");
     setShowModal(true);
     try {
       const bal = await adminApi.getUserBalance(user._id);
@@ -42,10 +44,10 @@ export default function UsersPage({ users, usersLoading, loadUsers, onOp }) {
     setLoading(true);
     setResult(null);
     try {
-      const res = await adminApi.addBalance(selectedUser._id, num);
+      const res = await adminApi.addBalance(selectedUser._id, num, paymentMethod);
       setUserBalance(res.balance);
       onOp();
-      setResult({ type: "success", message: `Added ${formatUSD(num)}. New balance: ${formatUSD(res.balance)}` });
+      setResult({ type: "success", message: `Added ${formatUSD(num)} via ${paymentMethod}. New balance: ${formatUSD(res.balance)}` });
       setAmount("");
       loadUsers();
     } catch (err) {
@@ -78,7 +80,7 @@ export default function UsersPage({ users, usersLoading, loadUsers, onOp }) {
             <Users className="h-5 w-5 text-amber-500" />
             <span className="text-sm font-bold text-slate-700">All Users</span>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-              {filtered.length}
+              {filtered?.length}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -296,6 +298,25 @@ export default function UsersPage({ users, usersLoading, loadUsers, onOp }) {
                           className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 pl-8 pr-4 py-3.5 text-base text-slate-800 placeholder-slate-300 focus:border-amber-400 focus:bg-white focus:outline-none transition-all font-semibold"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Payment Method
+                      </label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-700 focus:border-amber-400 focus:bg-white focus:outline-none transition-all font-semibold cursor-pointer"
+                      >
+                        <option value="Credit / Debit Card">Credit / Debit Card</option>
+                        <option value="Google Pay">Google Pay</option>
+                        <option value="PayPal">PayPal</option>
+                        <option value="eCheck (ACH)">eCheck (ACH)</option>
+                        <option value="Bank Wire Transfer">Bank Wire Transfer</option>
+                        <option value="Cryptocurrency">Cryptocurrency</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
 
                     <AnimatePresence>

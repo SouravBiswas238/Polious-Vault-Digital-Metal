@@ -42,7 +42,7 @@ function ProductCard({ p }) {
     e.preventDefault();
     if (isOutOfStockForSell) return;
     const priceSell = p.priceSell || p.price * 0.98;
-    addSellItem({ ...p, id: p._id || p.id, price: priceSell, qty });
+    addSellItem({ ...p, id: p._id || p.id, price: priceSell, buyPrice: p.buyPrice || p.price, qty });
     setAdded(true);
     setTimeout(() => { setAdded(false); setQty(1); }, 1800);
   };
@@ -104,31 +104,55 @@ function ProductCard({ p }) {
           </div>
         </div>
 
-        <div className="mt-0.5">
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-0.5">
-            We Buy At
-          </p>
-          <div className="flex items-baseline gap-2.5">
-            <p className="text-[22px] font-bold text-emerald-700 leading-none">
-              {fmt(p.priceSell || p.price * 0.98)}
-            </p>
+        {/* Pricing & Return Comparison Card */}
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500 font-medium">Avg Buy Price:</span>
+            <span className="font-bold text-slate-800">{fmt(p.buyPrice || p.price)}</span>
           </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500 font-medium">Current Price:</span>
+            <span className="font-bold text-slate-800">{fmt(p.currentPrice || p.price)}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs border-t border-slate-200/80 pt-1.5 mt-1.5">
+            <span className="text-gray-500 font-medium">Offered Buyback (98%):</span>
+            <span className="font-bold text-emerald-700">{fmt(p.priceSell || p.price * 0.98)}</span>
+          </div>
+
+          {/* Profit / Loss Indicator */}
+          {(() => {
+            const buyVal = p.buyPrice || p.price;
+            const currentVal = p.currentPrice || p.price;
+            const diff = currentVal - buyVal;
+            const pct = buyVal > 0 ? (diff / buyVal) * 100 : 0;
+            const isProfit = diff >= 0;
+            return (
+              <div className="flex justify-between items-center text-xs mt-1">
+                <span className="text-gray-500 font-medium">Net Return (Market):</span>
+                <span className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full text-[10px] ${
+                  isProfit ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100"
+                }`}>
+                  {isProfit ? "+" : ""}{fmt(diff)} ({isProfit ? "+" : ""}{pct.toFixed(1)}%)
+                </span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Tax Preview */}
         {p.purchasedAt && (
-          <div className="mt-2 p-2 rounded-lg bg-gray-50 border border-gray-100 space-y-1">
-            <div className="flex justify-between text-[10px]">
-              <span className="text-gray-500">Holding Period:</span>
-              <span className="font-bold text-gray-700">
-                {Math.floor((new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44))} months
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+            <div className="flex justify-between text-[11px] items-center">
+              <span className="text-gray-500 font-medium">Holding Duration:</span>
+              <span className="font-bold text-slate-700">
+                {Math.max(0, Math.floor((new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44)))} months
               </span>
             </div>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-gray-500">Tax Class:</span>
-              <span className={`font-bold ${
+            <div className="flex justify-between text-[11px] items-center">
+              <span className="text-gray-500 font-medium">Tax Treatment:</span>
+              <span className={`font-bold px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wider ${
                 (new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44) >= 24 
-                ? "text-blue-600" : "text-amber-600"
+                ? "bg-blue-50 text-blue-700 border border-blue-100" : "bg-amber-50 text-amber-700 border border-amber-100"
               }`}>
                 {(new Date() - new Date(p.purchasedAt)) / (1000 * 60 * 60 * 24 * 30.44) >= 24 ? "LTCG (12.5%)" : "STCG (Slab)"}
               </span>
@@ -167,8 +191,12 @@ function ProductCard({ p }) {
           >
             {added ? (
               "Added!"
-            ) : isOutOfStockForSell ? (
+            ) : p.isSellPending ? (
               "Request Pending"
+            ) : p.totalOwned === 0 ? (
+              "0 in Vault"
+            ) : isOutOfStockForSell ? (
+              "Unavailable"
             ) : (
               <><DollarSign className="h-4 w-4" /> Sell to Polyus</>
             )}
