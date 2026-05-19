@@ -1,8 +1,7 @@
 import { TrendingUp, TrendingDown, Minus, BarChart2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useQueries } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { metalsApi } from "@/lib/api";
+import { useLiveRates } from "@/hooks/useLiveRates";
 
 const METALS_CONFIG = ["XAU", "XAG", "XPT", "XPD"];
 
@@ -22,27 +21,6 @@ const fmt = (n) =>
         maximumFractionDigits: 2,
       }).format(n)
     : "—";
-
-// Fetches live data for one metal from our backend proxy
-const fetchMetal = async (symbol) => {
-  const json = await metalsApi.proxy(symbol);
-
-  const price = json.spot_price?.ask ?? null;
-  const changeSign = json.price_changes?.change_sign;
-  const trend = changeSign === "+" ? "up" : changeSign === "-" ? "down" : "flat";
-  const percentage = Number((json.price_changes?.percentage?.number ?? 0).toFixed(2));
-  const difference = json.price_changes?.difference ?? 0;
-
-  return {
-    symbol,
-    price,
-    trend,
-    percentage,
-    difference,
-    spot_price: json.spot_price,
-    price_changes: json.price_changes,
-  };
-};
 
 function PriceCard({ symbol, data, isLoading, isError }) {
   const meta = METAL_META[symbol];
@@ -72,7 +50,7 @@ function PriceCard({ symbol, data, isLoading, isError }) {
   if (isError || !data) {
     return (
       <div className="flex flex-1 min-w-40 flex-col gap-2 rounded-xl border border-rose-500/20 bg-white/5 px-5 py-4 justify-center items-center">
-        <span style={{ color: meta.color, fontSize: "0.65rem", fontWeight: 700 }}>{symbol}</span>
+        <span style={{ color: meta.color, fontSize: "0.65rem", font700: 700 }}>{symbol}</span>
         <span className="text-rose-400 text-[10px]">Unavailable</span>
       </div>
     );
@@ -115,17 +93,7 @@ function PriceCard({ symbol, data, isLoading, isError }) {
 }
 
 export function LivePriceTicker() {
-  // Fire 4 independent queries — one per metal — all in parallel
-  const queries = useQueries({
-    queries: METALS_CONFIG.map((symbol) => ({
-      queryKey: ["liveTicker", symbol],
-      queryFn: () => fetchMetal(symbol),
-      refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
-      staleTime: 1000 * 60 * 4,
-    })),
-  });
-
-  const isAnyLoading = queries.some((q) => q.isLoading);
+  const { rates, isLoading, isError } = useLiveRates();
 
   return (
     <div className="w-full bg-[oklch(0.17_0.04_255)] border-b border-white/8">
@@ -134,7 +102,7 @@ export function LivePriceTicker() {
           {/* Label */}
           <div className="flex items-center gap-2 shrink-0">
             <span className="relative flex h-2 w-2">
-              {!isAnyLoading && (
+              {!isLoading && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
               )}
               <span className="relative inline-flex rounded-full h-2 w-2 bg-gold" />
@@ -149,18 +117,18 @@ export function LivePriceTicker() {
 
           {/* Price cards — one per metal */}
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-3">
-            {METALS_CONFIG.map((symbol, i) => (
+            {METALS_CONFIG.map((symbol) => (
               <PriceCard
                 key={symbol}
                 symbol={symbol}
-                data={queries[i].data}
-                isLoading={queries[i].isLoading}
-                isError={queries[i].isError}
+                data={rates[symbol]}
+                isLoading={isLoading && !rates[symbol]}
+                isError={isError && !rates[symbol]}
               />
             ))}
           </div>
 
-          {isAnyLoading && (
+          {isLoading && (
             <div className="flex items-center gap-2 text-white/30 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" />
               Syncing…

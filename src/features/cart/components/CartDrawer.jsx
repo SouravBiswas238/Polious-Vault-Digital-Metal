@@ -1,12 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag, AlertCircle } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag, AlertCircle, TrendingUp, TrendingDown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { orderApi } from "@/lib/api";
 import { calculateBuyBreakdown, calculateSellBreakdown } from "@/lib/taxUtils";
+import { useLiveRates } from "@/hooks/useLiveRates";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -84,6 +86,8 @@ export function CartDrawer() {
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
 
+  const { getLiveProductPrices } = useLiveRates();
+
   const resetDrawer = () => {
     setStep("cart");
     setSelectedMethod(null);
@@ -109,25 +113,28 @@ export function CartDrawer() {
       navigate("/login?redirect=checkout");
       return;
     }
-    
+
     if (activeTab === "sell") {
       // For sell, we no longer need payment method selection.
       // We go straight to confirmation/support.
       handleConfirmSale({ label: "Not Specified (Handled by Support)" });
       return;
     }
-    
+
     setStep("payment");
   };
 
   // Tax calculations
   const buyBreakdown = activeTab === 'buy' ? calculateBuyBreakdown(total) : null;
-  
+
   const sellBreakdowns = activeTab === 'sell' ? items.map(item => {
+    const livePrices = getLiveProductPrices(item);
     const originalBuyPrice = item.buyPrice || (item.price / 0.98);
-    const singleBreakdown = calculateSellBreakdown(originalBuyPrice, item.price, item.purchasedAt);
+    const singleBreakdown = calculateSellBreakdown(originalBuyPrice, livePrices.priceSell, item.purchasedAt);
     return {
       ...singleBreakdown,
+      liveCurrentPrice: livePrices.currentPrice,
+      livePriceSell: livePrices.priceSell,
       profit: singleBreakdown.profit * item.qty,
       taxAmount: singleBreakdown.taxAmount * item.qty,
       finalAmount: singleBreakdown.finalAmount * item.qty,
@@ -137,6 +144,7 @@ export function CartDrawer() {
   const totalSellProfit = sellBreakdowns.reduce((sum, b) => sum + b.profit, 0);
   const totalSellTax = sellBreakdowns.reduce((sum, b) => sum + b.taxAmount, 0);
   const finalSellAmount = sellBreakdowns.reduce((sum, b) => sum + b.finalAmount, 0);
+  const liveSellTotalBeforeTax = sellBreakdowns.reduce((sum, b, idx) => sum + b.livePriceSell * (items[idx]?.qty || 1), 0);
 
   // Tax Optimization Tip: If held for 22-23 months, advise waiting for month 25
   const showTaxTip = activeTab === 'sell' && sellBreakdowns.some(b => b.holdingPeriodMonths >= 22 && b.holdingPeriodMonths < 24);
@@ -145,26 +153,32 @@ export function CartDrawer() {
     setLoading(true);
     try {
       const cartLines = items
-        .map((item) => `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(item.price * item.qty)}`)
+        .map((item) => {
+          const livePrices = getLiveProductPrices(item);
+          return `• ${item.name} (${item.metal}, ${item.weight}) x${item.qty} = ${fmt(livePrices.priceSell * item.qty)}`;
+        })
         .join("\n");
 
       // Create formal order in database
       await orderApi.create({
-        items: items.map(i => ({
-          productId: i.id,
-          name: i.name,
-          metal: i.metal,
-          weight: i.weight,
-          image: i.image,
-          qty: i.qty,
-          price: i.price,
-          purchasedAt: i.purchasedAt
-        })),
+        items: items.map(i => {
+          const livePrices = getLiveProductPrices(i);
+          return {
+            productId: i.id,
+            name: i.name,
+            metal: i.metal,
+            weight: i.weight,
+            image: i.image,
+            qty: i.qty,
+            price: livePrices.priceSell,
+            purchasedAt: i.purchasedAt
+          };
+        }),
         total: finalSellAmount,
         profit: totalSellProfit,
         taxAmount: totalSellTax,
         taxType: sellBreakdowns[0]?.taxType || 'None', // Assuming same type for simplicity or store individually
-        goldValue: total,
+        goldValue: liveSellTotalBeforeTax,
         type: 'Sell',
         paymentMethod: method?.label || "Handled by Support"
       });
@@ -183,7 +197,7 @@ export function CartDrawer() {
         "Items I want to sell:",
         cartLines,
         "",
-        `Estimated Buyback Total : ${fmt(total)}`,
+        `Estimated Buyback Total : ${fmt(liveSellTotalBeforeTax)}`,
         `Net Profit : ${fmt(totalSellProfit)}`,
         `Tax Deducted : ${fmt(totalSellTax)} (${sellBreakdowns[0]?.taxType || 'N/A'})`,
         `Final Amount : ${fmt(finalSellAmount)}`,
@@ -213,10 +227,16 @@ export function CartDrawer() {
       setLoading(false);
     }
   };
-
+console.log(user)
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
     const method = PAYMENT_METHODS.find((m) => m.id === selectedMethod);
+   
+
+    if (selectedMethod === 'Poluys Wallet' && user.balance < buyBreakdown.total) {
+      setCheckoutError("Insufficient balance. Please add funds to complete this order.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -241,6 +261,14 @@ export function CartDrawer() {
         type: 'Buy',
         paymentMethod: method.label
       });
+
+      if (selectedMethod === 'wallet') {
+        toast.success("Order placed successfully! Awaiting admin verification.");
+        setLoading(false);
+        clearCart();
+        handleClose();
+        return;
+      }
 
       const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
       const email = user.personalInfo?.email || "";
@@ -282,6 +310,48 @@ export function CartDrawer() {
       }, 1000);
     } catch (err) {
       setCheckoutError(err.message || "Failed to process purchase request.");
+      setLoading(false);
+    }
+  };
+
+  const handleConnectSupportForBalance = () => {
+    setLoading(true);
+    try {
+      const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
+      const email = user.personalInfo?.email || "";
+      const phone = user.personalInfo?.phoneNumber || "";
+
+      const supportNote = [
+        "💳 WALLET TOP-UP REQUEST",
+        "",
+        `Customer : ${fullName}`,
+        `User ID  : ${user._id || "N/A"}`,
+        `Email    : ${email}`,
+        "",
+        `Current Balance  : ${fmt(user.balance)}`,
+        `Required Amount  : ${fmt(buyBreakdown.total)}`,
+        `Deficit Amount   : ${fmt(buyBreakdown.total - user.balance)}`,
+        "",
+        "Please assist me in adding funds / recharging my Polyus Wallet so I can complete my order.",
+      ].join("\n");
+
+      window.ssq = window.ssq || [];
+      window.ssq.push("setCustomer", {
+        user_id: user._id || email,
+        name: fullName,
+        email,
+        phone,
+        description: supportNote,
+      });
+      window.ssq.push("chatOpen");
+
+      setTimeout(() => {
+        window.ssq.push("sendTextMessage", supportNote);
+        setLoading(false);
+        handleClose();
+      }, 1000);
+    } catch (err) {
+      setCheckoutError(err.message || "Failed to initiate support chat.");
       setLoading(false);
     }
   };
@@ -350,8 +420,8 @@ export function CartDrawer() {
                 <button
                   onClick={() => setActiveTab("buy")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "buy"
-                      ? "bg-[#1e3a5f] text-white shadow-md"
-                      : "text-muted-foreground hover:bg-secondary/20"
+                    ? "bg-[#1e3a5f] text-white shadow-md"
+                    : "text-muted-foreground hover:bg-secondary/20"
                     }`}
                 >
                   <ShoppingCart className="h-4 w-4" />
@@ -361,8 +431,8 @@ export function CartDrawer() {
                 <button
                   onClick={() => setActiveTab("sell")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "sell"
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "text-muted-foreground hover:bg-secondary/20"
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "text-muted-foreground hover:bg-secondary/20"
                     }`}
                 >
                   <Tag className="h-4 w-4" />
@@ -414,76 +484,104 @@ export function CartDrawer() {
                   ) : (
                     <ul className="space-y-1">
                       <AnimatePresence initial={false}>
-                        {items.map((item) => (
-                          <motion.li
-                            key={item.id}
-                            layout
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="flex gap-4 py-4 border-b border-border/40 last:border-0">
-                              {/* Product image */}
-                              <div className="h-18 w-18 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-secondary/40 shadow-sm">
-                                <img
-                                  src={item.image}
-                                  alt={item.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
+                        {items.map((item, idx) => {
+                          const livePrices = getLiveProductPrices(item);
+                          const itemPriceToUse = activeTab === 'sell' ? livePrices.priceSell : item.price;
+                          
+                          return (
+                            <motion.li
+                              key={item.id}
+                              layout
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="flex gap-4 py-4 border-b border-border/40 last:border-0">
+                                {/* Product image */}
+                                <div className="h-18 w-18 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-secondary/40 shadow-sm">
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
 
-                              {/* Product info */}
-                              <div className="flex flex-1 flex-col justify-between min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gold/80">
-                                      {item.metal} · {item.category}
+                                {/* Product info */}
+                                <div className="flex flex-1 flex-col justify-between min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gold/80">
+                                        {item.metal} · {item.category}
+                                      </p>
+                                      <h3 className="mt-0.5 text-sm font-semibold leading-snug text-foreground line-clamp-2">
+                                        {item.name}
+                                      </h3>
+                                      <p className="text-[11px] text-muted-foreground mt-0.5">{item.weight}</p>
+                                      
+                                      {activeTab === 'sell' && (() => {
+                                        const b = sellBreakdowns[idx];
+                                        if (!b) return null;
+                                        
+                                        const isProfit = b.profit >= 0;
+                                        const pct = item.buyPrice > 0 ? (b.profit / (item.buyPrice * item.qty)) * 100 : 0;
+                                        
+                                        return (
+                                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                            <span className="text-muted-foreground">Buy: {fmt(item.buyPrice)}</span>
+                                            <span className="text-muted-foreground">·</span>
+                                            <span className={`inline-flex items-center gap-0.5 font-bold rounded-md px-1.5 py-0.5 ${
+                                              isProfit 
+                                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
+                                                : "bg-rose-50 text-rose-700 border border-rose-100"
+                                            }`}>
+                                              {isProfit ? <TrendingUp className="h-3 w-3 animate-pulse" /> : <TrendingDown className="h-3 w-3 animate-pulse" />}
+                                              {isProfit ? "+" : ""}{fmt(b.profit)} ({isProfit ? "+" : ""}{pct.toFixed(1)}%)
+                                            </span>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                    <button
+                                      onClick={() => removeItem(item.id)}
+                                      aria-label="Remove"
+                                      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-500"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+
+                                  {/* Qty + price */}
+                                  <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center rounded-full border border-border/70 bg-secondary/30 overflow-hidden">
+                                      <button
+                                        onClick={() => updateQty(item.id, item.qty - 1)}
+                                        className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold"
+                                        aria-label="Decrease"
+                                      >
+                                        <Minus className="h-3 w-3" />
+                                      </button>
+                                      <span className="w-7 text-center text-xs font-semibold tabular-nums text-foreground">
+                                        {item.qty}
+                                      </span>
+                                      <button
+                                        onClick={() => updateQty(item.id, item.qty + 1)}
+                                        disabled={activeTab === 'sell' && item.qty >= (item.totalOwned || 0)}
+                                        className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold disabled:opacity-20 disabled:cursor-not-allowed"
+                                        aria-label="Increase"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                    <p className={`text-sm font-bold tabular-nums ${activeTab === 'buy' ? 'text-gold' : 'text-emerald-600'}`}>
+                                      {fmt(itemPriceToUse * item.qty)}
                                     </p>
-                                    <h3 className="mt-0.5 text-sm font-semibold leading-snug text-foreground line-clamp-2">
-                                      {item.name}
-                                    </h3>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">{item.weight}</p>
                                   </div>
-                                  <button
-                                    onClick={() => removeItem(item.id)}
-                                    aria-label="Remove"
-                                    className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-500"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
-
-                                {/* Qty + price */}
-                                <div className="flex items-center justify-between mt-2">
-                                  <div className="flex items-center rounded-full border border-border/70 bg-secondary/30 overflow-hidden">
-                                    <button
-                                      onClick={() => updateQty(item.id, item.qty - 1)}
-                                      className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold"
-                                      aria-label="Decrease"
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </button>
-                                    <span className="w-7 text-center text-xs font-semibold tabular-nums text-foreground">
-                                      {item.qty}
-                                    </span>
-                                    <button
-                                      onClick={() => updateQty(item.id, item.qty + 1)}
-                                      disabled={activeTab === 'sell' && item.qty >= (item.totalOwned || 0)}
-                                      className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-gold disabled:opacity-20 disabled:cursor-not-allowed"
-                                      aria-label="Increase"
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                  <p className={`text-sm font-bold tabular-nums ${activeTab === 'buy' ? 'text-gold' : 'text-emerald-600'}`}>
-                                    {fmt(item.price * item.qty)}
-                                  </p>
                                 </div>
                               </div>
-                            </div>
-                          </motion.li>
-                        ))}
+                            </motion.li>
+                          );
+                        })}
                       </AnimatePresence>
                     </ul>
                   )}
@@ -509,7 +607,7 @@ export function CartDrawer() {
                         <>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Gold Buyback Price</span>
-                            <span className="tabular-nums font-medium text-foreground">{fmt(total)}</span>
+                            <span className="tabular-nums font-medium text-foreground">{fmt(liveSellTotalBeforeTax)}</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Capital Gains Tax ({sellBreakdowns[0]?.taxRateLabel})</span>
@@ -549,8 +647,8 @@ export function CartDrawer() {
                           {count} {count === 1 ? "item" : "items"}
                         </p>
                         {activeTab === 'sell' && (
-                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
-                            Absolute Profit: {fmt(totalSellProfit)}
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${totalSellProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {totalSellProfit >= 0 ? 'Net Profit: ' : 'Net Loss: '}{fmt(totalSellProfit)}
                           </p>
                         )}
                       </div>
@@ -573,8 +671,8 @@ export function CartDrawer() {
                       onClick={handleCheckout}
                       disabled={loading}
                       className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold shadow-lg transition-all ${activeTab === "buy"
-                          ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a]"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        ? "bg-[#1e3a5f] text-white hover:bg-[#162c4a]"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
                         }`}
                     >
                       {loading ? (
@@ -686,8 +784,8 @@ export function CartDrawer() {
                               {checkoutError ? "Transaction Failed" : "Insufficient Balance"}
                             </p>
                             <p className="text-[10px] text-red-800 leading-relaxed">
-                              {checkoutError 
-                                ? checkoutError 
+                              {checkoutError
+                                ? checkoutError
                                 : `Your wallet balance (${fmt(user.balance)}) is less than the required amount (${fmt(buyBreakdown.total)}). Please add funds or select another payment method.`}
                             </p>
                           </div>
@@ -696,25 +794,69 @@ export function CartDrawer() {
                     ) : null}
                   </AnimatePresence>
 
-                  <motion.button
-                    whileHover={{ scale: selectedMethod ? 1.01 : 1 }}
-                    whileTap={{ scale: selectedMethod ? 0.98 : 1 }}
-                    onClick={handleConfirmPayment}
-                    disabled={!selectedMethod || loading || (selectedMethod === 'wallet' && user.balance < buyBreakdown.total)}
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3.5 text-sm font-bold text-gold-foreground shadow-[0_8px_32px_-8px_oklch(0.78_0.13_80/0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_40px_-8px_oklch(0.78_0.13_80/0.7)]"
-                  >
-                    {loading ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Support…</>
-                    ) : selectedMethod === 'wallet' && user.balance < buyBreakdown.total ? (
-                      "Insufficient Wallet Balance"
+                  {selectedMethod === 'wallet' ? (
+                    user.balance < buyBreakdown.total ? (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleConnectSupportForBalance}
+                          disabled={loading}
+                          className="flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3.5 text-sm font-bold text-gold-foreground shadow-[0_8px_32px_-8px_oklch(0.78_0.13_80/0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_40px_-8px_oklch(0.78_0.13_80/0.7)]"
+                        >
+                          {loading ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Support…</>
+                          ) : (
+                            <><MessageCircle className="h-4 w-4" /> Connect Support to Add Balance</>
+                          )}
+                        </motion.button>
+                        <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+                          <ShieldCheck className="h-3.5 w-3.5 text-gold/60" />
+                          Click to contact our support team via live chat to top up your balance.
+                        </div>
+                      </>
                     ) : (
-                      <><MessageCircle className="h-4 w-4" /> Confirm &amp; Contact Support</>
-                    )}
-                  </motion.button>
-                  <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                    <ShieldCheck className="h-3.5 w-3.5 text-gold/60" />
-                    Your order details will be sent to our support team via live chat
-                  </div>
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleConfirmPayment}
+                          disabled={loading}
+                          className="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 py-3.5 text-sm font-bold text-white shadow-[0_8px_32px_-8px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_40px_-8px_rgba(16,185,129,0.6)]"
+                        >
+                          {loading ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Confirming Order…</>
+                          ) : (
+                            <><Check className="h-4 w-4" /> Confirm &amp; Pay</>
+                          )}
+                        </motion.button>
+                        <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+                          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600/60" />
+                          Order will be created as Pending. Wallet funds will deduct upon approval.
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <motion.button
+                        whileHover={{ scale: selectedMethod ? 1.01 : 1 }}
+                        whileTap={{ scale: selectedMethod ? 0.98 : 1 }}
+                        onClick={handleConfirmPayment}
+                        disabled={!selectedMethod || loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-full bg-gold py-3.5 text-sm font-bold text-gold-foreground shadow-[0_8px_32px_-8px_oklch(0.78_0.13_80/0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_40px_-8px_oklch(0.78_0.13_80/0.7)]"
+                      >
+                        {loading ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Support…</>
+                        ) : (
+                          <><MessageCircle className="h-4 w-4" /> Confirm &amp; Contact Support</>
+                        )}
+                      </motion.button>
+                      <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+                        <ShieldCheck className="h-3.5 w-3.5 text-gold/60" />
+                        Your order details will be sent to our support team via live chat
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

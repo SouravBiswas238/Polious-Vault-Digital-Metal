@@ -345,7 +345,6 @@ export default function ShopPage() {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  console.log(METALS)
 
   useEffect(() => {
     let cancelled = false;
