@@ -120,7 +120,7 @@ export function CartDrawer() {
     if (activeTab === "sell") {
       // For sell, we no longer need payment method selection.
       // We go straight to confirmation/support.
-      handleConfirmSale({ label: "Not Specified (Handled by Support)" });
+      handleConfirmSale({ label: "Polyus Sell" });
       return;
     }
 
@@ -167,7 +167,7 @@ export function CartDrawer() {
         items: items.map(i => {
           const livePrices = getLiveProductPrices(i);
           return {
-            productId: i.id,
+            productId: i.productId,   // actual product ID (not the vault lot _id)
             name: i.name,
             metal: i.metal,
             weight: i.weight,
@@ -265,7 +265,7 @@ console.log(user)
       });
 
       if (selectedMethod === 'wallet') {
-        toast.success("Order placed successfully! Awaiting admin verification.");
+        toast.success("Order completed successfully! Payment deducted from your Polyus Wallet.");
         setLoading(false);
         clearCart();
         handleClose();

@@ -34,6 +34,7 @@ export default function OrdersPage() {
 
   const handleStatusChange = async (id, newStatus) => {
     setUpdatingId(id);
+    console.log("status")
     try {
       await adminApi.updateOrderStatus(id, newStatus);
       setOrders(orders.map(o => o._id === id ? { ...o, status: newStatus } : o));

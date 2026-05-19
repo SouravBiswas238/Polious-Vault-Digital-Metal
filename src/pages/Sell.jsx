@@ -40,7 +40,6 @@ function ProductCard({ p, getLiveProductPrices }) {
   const [added, setAdded] = useState(false);
 
   const livePrices = getLiveProductPrices(p);
-  console.log(livePrices)
   const currentPriceToUse = livePrices.currentPrice;
   const priceSellToUse = livePrices.priceSell;
 
@@ -212,7 +211,7 @@ export default function SellPage() {
     setLoading(true);
 
     // Fetch only owned products for selling
-    orderApi.ownedProducts()
+    orderApi.ownedProducts(user._id)
       .then((data) => {
         if (!cancelled) {
           setAllProducts(Array.isArray(data) ? data : []);
@@ -234,6 +233,8 @@ export default function SellPage() {
   if (!user) return null;
 
   const products = allProducts;
+
+  console.log(products)
 
   return (
     <div className="bg-white min-h-screen">

@@ -205,8 +205,8 @@ export const orderApi = {
   async canSell() {
     return request("/orders/can-sell");
   },
-  async ownedProducts() {
-    return request("/orders/owned-products");
+  async ownedProducts(userId) {
+    return request(`/orders/owned-products/${userId}`);
   },
   async create(data) {
     return request("/orders", {
