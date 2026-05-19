@@ -9,6 +9,7 @@ import UsersPage      from "@/features/admin/components/UsersPage";
 import ProductsPage   from "@/features/admin/components/ProductsPage";
 import OrdersPage     from "@/features/admin/components/OrdersPage";
 import WithdrawalsPage from "@/features/admin/components/WithdrawalsPage";
+import TransactionsPage from "@/features/admin/components/TransactionsPage";
 import PlaceholderPage from "@/features/admin/components/PlaceholderPage";
 
 const PAGE_TITLES = {
@@ -116,13 +117,7 @@ export default function Admin() {
               {activePage === "products" && <ProductsPage />}
               {activePage === "orders" && <OrdersPage />}
               {activePage === "withdrawals" && <WithdrawalsPage />}
-              {activePage === "transactions" && (
-                <PlaceholderPage
-                  title="Transactions"
-                  description="View all transaction history across accounts."
-                  icon={Receipt}
-                />
-              )}
+              {activePage === "transactions" && <TransactionsPage />}
               {activePage === "settings" && (
                 <PlaceholderPage
                   title="Settings"

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useBalance } from "@/hooks/useBalance";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { orderApi } from "@/lib/api";
@@ -78,6 +79,8 @@ export function CartDrawer() {
     clearBuyCart, clearSellCart
   } = useCart();
   const { user } = useAuth();
+  const { data: balanceObj } = useBalance();
+  const activeBalance = balanceObj && typeof balanceObj.balance === 'number' ? balanceObj.balance : (user?.balance || 0);
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("buy");
@@ -231,9 +234,8 @@ console.log(user)
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
     const method = PAYMENT_METHODS.find((m) => m.id === selectedMethod);
-   
 
-    if (selectedMethod === 'Poluys Wallet' && user.balance < buyBreakdown.total) {
+    if ((selectedMethod === 'wallet' || selectedMethod === 'Poluys Wallet') && activeBalance < buyBreakdown.total) {
       setCheckoutError("Insufficient balance. Please add funds to complete this order.");
       return;
     }
@@ -328,9 +330,9 @@ console.log(user)
         `User ID  : ${user._id || "N/A"}`,
         `Email    : ${email}`,
         "",
-        `Current Balance  : ${fmt(user.balance)}`,
+        `Current Balance  : ${fmt(activeBalance)}`,
         `Required Amount  : ${fmt(buyBreakdown.total)}`,
-        `Deficit Amount   : ${fmt(buyBreakdown.total - user.balance)}`,
+        `Deficit Amount   : ${fmt(buyBreakdown.total - activeBalance)}`,
         "",
         "Please assist me in adding funds / recharging my Polyus Wallet so I can complete my order.",
       ].join("\n");
@@ -770,7 +772,7 @@ console.log(user)
                 {/* Confirm footer */}
                 <div className="border-t border-border/50 bg-secondary/20 px-6 py-5 space-y-3 shrink-0">
                   <AnimatePresence>
-                    {(selectedMethod === 'wallet' && user.balance < buyBreakdown.total) || checkoutError ? (
+                    {(selectedMethod === 'wallet' && activeBalance < buyBreakdown.total) || checkoutError ? (
                       <motion.div
                         initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                         animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
@@ -786,7 +788,7 @@ console.log(user)
                             <p className="text-[10px] text-red-800 leading-relaxed">
                               {checkoutError
                                 ? checkoutError
-                                : `Your wallet balance (${fmt(user.balance)}) is less than the required amount (${fmt(buyBreakdown.total)}). Please add funds or select another payment method.`}
+                                : `Your wallet balance (${fmt(activeBalance)}) is less than the required amount (${fmt(buyBreakdown.total)}). Please add funds or select another payment method.`}
                             </p>
                           </div>
                         </div>
@@ -795,7 +797,7 @@ console.log(user)
                   </AnimatePresence>
 
                   {selectedMethod === 'wallet' ? (
-                    user.balance < buyBreakdown.total ? (
+                    activeBalance < buyBreakdown.total ? (
                       <>
                         <motion.button
                           whileHover={{ scale: 1.01 }}

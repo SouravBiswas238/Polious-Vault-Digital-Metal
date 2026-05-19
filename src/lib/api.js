@@ -184,6 +184,9 @@ export const adminApi = {
       body: JSON.stringify({ status }),
     });
   },
+  async getTransactions() {
+    return request("/admin/transactions", { headers: { "x-admin-key": ADMIN_KEY } });
+  },
 };
 
 export const metalsApi = {
