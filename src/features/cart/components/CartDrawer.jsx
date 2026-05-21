@@ -1,5 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag, AlertCircle, TrendingUp, TrendingDown, Check } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, Lock, LogIn, ShieldCheck, Building2, CreditCard, Wallet, Bitcoin, ChevronLeft, MessageCircle, Loader2, ShoppingCart, Info, Tag, AlertCircle, TrendingUp, TrendingDown, Check, Clock, CalendarDays, ChevronDown } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -7,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBalance } from "@/hooks/useBalance";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { cn } from "@/lib/utils";
 import { orderApi } from "@/lib/api";
 import { calculateBuyBreakdown, calculateSellBreakdown } from "@/lib/taxUtils";
 import { useLiveRates } from "@/hooks/useLiveRates";
@@ -88,6 +92,24 @@ export function CartDrawer() {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [duration, setDuration] = useState({ type: null, date: null });
+  const [durationError, setDurationError] = useState("");
+
+  const durationOptions =
+    activeTab === "sell"
+      ? [
+          { value: "immediately", label: "Immediately" },
+          { value: "until_date", label: "Until Date" },
+        ]
+      : [
+          { value: "permanent", label: "Permanent" },
+          { value: "until_date", label: "Until Date" },
+        ];
+
+  const isDurationValid =
+    duration.type !== null &&
+    durationOptions.some((o) => o.value === duration.type) &&
+    (duration.type !== "until_date" || duration.date instanceof Date);
 
   const { getLiveProductPrices } = useLiveRates();
 
@@ -96,6 +118,8 @@ export function CartDrawer() {
     setSelectedMethod(null);
     setLoading(false);
     setCheckoutError("");
+    setDuration({ type: null, date: null });
+    setDurationError("");
   };
 
   const handleClose = () => {
@@ -117,9 +141,17 @@ export function CartDrawer() {
       return;
     }
 
+    if (!isDurationValid) {
+      setDurationError(
+        duration.type === "until_date" && !(duration.date instanceof Date)
+          ? "Please select an end date."
+          : "Please select a duration to continue."
+      );
+      return;
+    }
+    setDurationError("");
+
     if (activeTab === "sell") {
-      // For sell, we no longer need payment method selection.
-      // We go straight to confirmation/support.
       handleConfirmSale({ label: "Polyus Sell" });
       return;
     }
@@ -152,6 +184,15 @@ export function CartDrawer() {
   // Tax Optimization Tip: If held for 22-23 months, advise waiting for month 25
   const showTaxTip = activeTab === 'sell' && sellBreakdowns.some(b => b.holdingPeriodMonths >= 22 && b.holdingPeriodMonths < 24);
 
+  const durationLabel =
+    duration.type === "permanent"
+      ? "Permanent"
+      : duration.type === "immediately"
+      ? "Immediately"
+      : duration.type === "until_date" && duration.date instanceof Date
+      ? `Until ${format(duration.date, "PPP")}`
+      : "Not specified";
+
   const handleConfirmSale = async (method) => {
     setLoading(true);
     try {
@@ -183,7 +224,9 @@ export function CartDrawer() {
         taxType: sellBreakdowns[0]?.taxType || 'None', // Assuming same type for simplicity or store individually
         goldValue: liveSellTotalBeforeTax,
         type: 'Sell',
-        paymentMethod: method?.label || "Handled by Support"
+        paymentMethod: method?.label || "Handled by Support",
+        durationType: duration.type,
+        untilDate: duration.type === 'until_date' && duration.date instanceof Date ? duration.date.toISOString() : undefined,
       });
 
       const fullName = `${user.personalInfo?.firstName || ""} ${user.personalInfo?.lastName || ""}`.trim() || "Customer";
@@ -205,6 +248,7 @@ export function CartDrawer() {
         `Tax Deducted : ${fmt(totalSellTax)} (${sellBreakdowns[0]?.taxType || 'N/A'})`,
         `Final Amount : ${fmt(finalSellAmount)}`,
         `Payout Method : ${method?.label || "To be discussed with support"}`,
+        `Duration : ${durationLabel}`,
         "",
         "Please assist me in completing this sale to Polyus Vault.",
       ].join("\n");
@@ -261,7 +305,9 @@ console.log(user)
         gst: buyBreakdown.gst,
         goldValue: buyBreakdown.actualGoldValue,
         type: 'Buy',
-        paymentMethod: method.label
+        paymentMethod: method.label,
+        durationType: duration.type,
+        untilDate: duration.type === 'until_date' && duration.date instanceof Date ? duration.date.toISOString() : undefined,
       });
 
       if (selectedMethod === 'wallet') {
@@ -290,6 +336,7 @@ console.log(user)
         `GST (3%)          : ${fmt(buyBreakdown.gst)}`,
         `Order Total       : ${fmt(buyBreakdown.total)} (${count} item${count !== 1 ? "s" : ""})`,
         `Payment Method    : ${method.label}`,
+        `Duration          : ${durationLabel}`,
         "",
         "Please assist me in completing this purchase.",
       ].join("\n");
@@ -654,6 +701,65 @@ console.log(user)
                           </p>
                         )}
                       </div>
+                    </div>
+
+                    {/* Duration selector */}
+                    <div className="space-y-2 rounded-xl border border-border/60 bg-secondary/30 px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-gold/70 shrink-0" />
+                        <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                          Duration <span className="text-red-400 ml-0.5">*</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {durationOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              setDuration((d) => ({ ...d, type: opt.value, date: opt.value !== "until_date" ? null : d.date }));
+                              setDurationError("");
+                            }}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                              duration.type === opt.value
+                                ? activeTab === "sell"
+                                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                  : "border-gold bg-gold/10 text-gold"
+                                : "border-border/60 text-muted-foreground hover:border-gold/40 hover:text-foreground"
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      {duration.type === "until_date" && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex w-full items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-xs text-left transition-colors hover:border-gold/40">
+                              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className={duration.date ? "text-foreground font-medium" : "text-muted-foreground"}>
+                                {duration.date ? format(duration.date, "PPP") : "Pick an end date"}
+                              </span>
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start" side="top">
+                            <Calendar
+                              mode="single"
+                              selected={duration.date || undefined}
+                              onSelect={(date) => {
+                                setDuration((d) => ({ ...d, date: date || "" }));
+                                setDurationError("");
+                              }}
+                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                      {durationError && (
+                        <p className="text-[11px] font-medium text-red-500 mt-1">{durationError}</p>
+                      )}
                     </div>
 
                     {/* Login notice */}
