@@ -16,7 +16,7 @@ const accountLinks = [
   { label: "Transaction History", to: "/account/transactions" },
   { label: "My Profile", to: "/account/profile" },
   { label: "Refer a Friend", to: "/account/refer" },
-  { label: "Sign In", to: "/login" },
+  { label: "Admin Login", to: "/admin" },
 ];
 
 const companyLinks = [
