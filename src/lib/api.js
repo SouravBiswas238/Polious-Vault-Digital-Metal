@@ -1,5 +1,6 @@
 export const API_BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.API_URL) || "http://localhost:5000/api";
+  (typeof import.meta !== "undefined" && import.meta.env?.API_URL) ||
+  "https://polyus-vault-server.vercel.app/api";
 
 const delay = (value, ms = 350) => new Promise((res) => setTimeout(() => res(value), ms));
 
