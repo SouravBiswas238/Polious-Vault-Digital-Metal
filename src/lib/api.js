@@ -1,8 +1,7 @@
 export const API_BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) || "http://localhost:5000/api";
+  (typeof import.meta !== "undefined" && import.meta.env?.API_URL) || "http://localhost:5000/api";
 
-const delay = (value, ms = 350) =>
-  new Promise((res) => setTimeout(() => res(value), ms));
+const delay = (value, ms = 350) => new Promise((res) => setTimeout(() => res(value), ms));
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");
@@ -172,7 +171,10 @@ export const adminApi = {
     });
   },
   async rejectWithdrawal(id) {
-    return request(`/admin/withdrawals/${id}/reject`, { method: "POST", headers: { "x-admin-key": ADMIN_KEY } });
+    return request(`/admin/withdrawals/${id}/reject`, {
+      method: "POST",
+      headers: { "x-admin-key": ADMIN_KEY },
+    });
   },
   async getOrders() {
     return request("/admin/orders", { headers: { "x-admin-key": ADMIN_KEY } });
@@ -197,7 +199,7 @@ export const metalsApi = {
     return request(`/metals/proxy?symbol=${symbol}&period=${period}&weight_unit=${weight_unit}`);
   },
 };
- 
+
 export const orderApi = {
   async list() {
     return request("/orders");
